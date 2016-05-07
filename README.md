@@ -11,14 +11,14 @@
 - **Consistency**
 
 ## Basic Operation
-- **Get**
+- **Get(key)**
 Get the value of specified key
-- **Append**
+- **Append(key, data)**
 Append data to an existent Key/Value pair
-- **Put**
-Put a Key/Value pair into the database
-- **Delete**
-Delete a a Key/Value pair from database
+- **Put(key, value)**
+Put a Key/Value pair into database
+- **Delete(key)**
+Delete a Key/Value pair from database
 
 ## Requirements
 1.Java >= 1.8
