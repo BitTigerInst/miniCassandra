@@ -1,0 +1,103 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath libraries.math
+        classpath libraries.protobuf_plugin
+    }
+}
+
+plugins {
+  id "me.champeau.gradle.jmh" version "0.3.0"
+}
+
+apply plugin: 'application'
+
+description = "grpc Benchmarks"
+
+startScripts.enabled = false
+run.enabled = false
+
+jmh {
+    jmhVersion = '1.11.3'
+    warmupIterations = 10
+    iterations = 10
+    fork = 1
+    jvmArgs = "-server -Xms2g -Xmx2g"
+}
+
+dependencies {
+    compile project(':grpc-core'),
+            project(':grpc-netty'),
+            project(':grpc-okhttp'),
+            project(':grpc-stub'),
+            project(':grpc-protobuf'),
+            project(':grpc-testing'),
+            libraries.junit,
+            libraries.mockito,
+            libraries.hdrhistogram,
+            libraries.netty_tcnative,
+            libraries.netty_epoll,
+            libraries.math
+}
+
+configureProtoCompilation()
+
+def vmArgs = [
+        "-server",
+        "-Xms2g",
+        "-Xmx2g"
+]
+
+task qps_client(type: CreateStartScripts) {
+    mainClassName = "io.grpc.benchmarks.qps.AsyncClient"
+    applicationName = "qps_client"
+    defaultJvmOpts = ["-javaagent:" + configurations.alpnagent.asPath] + vmArgs
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + project.configurations.runtime
+}
+
+task openloop_client(type: CreateStartScripts) {
+    mainClassName = "io.grpc.benchmarks.qps.OpenLoopClient"
+    applicationName = "openloop_client"
+    defaultJvmOpts = ["-javaagent:" + configurations.alpnagent.asPath] + vmArgs
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + project.configurations.runtime
+}
+
+task qps_server(type: CreateStartScripts) {
+    mainClassName = "io.grpc.benchmarks.qps.AsyncServer"
+    applicationName = "qps_server"
+    defaultJvmOpts = ["-javaagent:" + configurations.alpnagent.asPath] + vmArgs
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + project.configurations.runtime
+}
+
+task benchmark_worker(type: CreateStartScripts) {
+    mainClassName = "io.grpc.benchmarks.driver.LoadWorker"
+    applicationName = "benchmark_worker"
+    defaultJvmOpts = ["-javaagent:" + configurations.alpnagent.asPath] + vmArgs
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + project.configurations.runtime
+}
+
+applicationDistribution.into("bin") {
+    from(qps_client)
+    from(openloop_client)
+    from(qps_server)
+    from(benchmark_worker)
+    fileMode = 0755
+}
+
+// Let intellij projects refer to generated code
+idea {
+    module {
+        sourceDirs += file("${projectDir}/src/generated/main/java");
+        sourceDirs += file("${projectDir}/src/generated/main/grpc");
+    }
+}
+

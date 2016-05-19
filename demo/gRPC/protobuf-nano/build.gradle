@@ -1,0 +1,48 @@
+// Add dependency on the protobuf plugin
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath libraries.protobuf_plugin
+    }
+}
+
+plugins {
+    id "be.insaneprogramming.gradle.animalsniffer" version "1.4.0"
+}
+
+description = 'gRPC: Protobuf Nano'
+
+dependencies {
+    compile project(':grpc-core'),
+            libraries.protobuf_nano,
+            libraries.guava
+}
+
+animalsniffer {
+    signature = "org.codehaus.mojo.signature:java16:+@signature"
+}
+
+configureProtoCompilation()
+
+if (project.hasProperty('protobuf')) {
+  protobuf {
+    generateProtoTasks {
+      all().each { task ->
+        task.builtins {
+          remove java
+          javanano {
+            option 'ignore_services=true'
+          }
+        }
+      }
+    }
+  }
+}
+
+idea {
+    module {
+        sourceDirs += file("${projectDir}/src/generated/test/javanano");
+    }
+}

@@ -1,0 +1,15 @@
+description = "gRPC: Netty"
+dependencies {
+    compile project(':grpc-core'),
+            libraries.netty
+
+    // Tests depend on base class defined by core module.
+    testCompile project(':grpc-core').sourceSets.test.output,
+                project(':grpc-testing')
+}
+
+test {
+    jvmArgs "-javaagent:" + configurations.alpnagent.asPath
+}
+
+javadoc.options.links 'http://netty.io/4.1/api/'

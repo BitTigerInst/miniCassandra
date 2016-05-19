@@ -1,0 +1,96 @@
+apply plugin: 'application'
+
+description = "gRPC: Integration Testing"
+startScripts.enabled = false
+
+// Add dependency on the protobuf plugin
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath libraries.protobuf_plugin
+    }
+}
+
+dependencies {
+    compile project(':grpc-auth'),
+            project(':grpc-core'),
+            project(':grpc-netty'),
+            project(':grpc-okhttp'),
+            project(':grpc-protobuf'),
+            project(':grpc-stub'),
+            project(':grpc-testing'),
+            libraries.junit,
+            libraries.mockito,
+            libraries.netty_tcnative,
+            libraries.oauth_client
+}
+
+test {
+    // For the automated tests, use Jetty ALPN.
+    jvmArgs "-javaagent:" + configurations.alpnagent.asPath
+}
+
+// The application plugin uses the distribution plugin and configures the jars to be
+// placed into the "lib" folder. Since we don't include netty_tcnative as a dependency,
+// we have to manually copy it into the lib folder so that it's available to the scripts.
+distributions {
+    main {
+        contents {
+            from(configurations.tcnative) {
+                into "lib"
+            }
+        }
+    }
+}
+
+// For the generated scripts, use Netty tcnative (i.e. OpenSSL).
+// Note that OkHttp currently only supports ALPN, so OpenSSL version >= 1.0.2 is required.
+
+task test_client(type: CreateStartScripts) {
+    mainClassName = "io.grpc.testing.integration.TestServiceClient"
+    applicationName = "test-client"
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + configurations.runtime + configurations.tcnative
+}
+
+task test_server(type: CreateStartScripts) {
+    mainClassName = "io.grpc.testing.integration.TestServiceServer"
+    applicationName = "test-server"
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + configurations.runtime + configurations.tcnative
+}
+
+task reconnect_test_client(type: CreateStartScripts) {
+    mainClassName = "io.grpc.testing.integration.ReconnectTestClient"
+    applicationName = "reconnect-test-client"
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + configurations.runtime + configurations.tcnative
+}
+
+task stresstest_client(type: CreateStartScripts) {
+    mainClassName = "io.grpc.testing.integration.StressTestClient"
+    applicationName = "stresstest-client"
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + configurations.runtime + configurations.tcnative
+    defaultJvmOpts = ["-verbose:gc"]
+}
+
+applicationDistribution.into("bin") {
+    from(test_client)
+    from(test_server)
+    from(reconnect_test_client)
+    from(stresstest_client)
+    fileMode = 0755
+}
+
+configureProtoCompilation()
+
+// Let intellij projects refer to generated code
+idea {
+    module {
+        sourceDirs += file("${projectDir}/src/generated/main/java");
+        sourceDirs += file("${projectDir}/src/generated/main/grpc");
+    }
+}
