@@ -1,25 +1,32 @@
 package dht.node;
 
 import java.net.*;
+
 import leveldb.StorageServiceImpl;
 import dht.chord.*;
 import util.*;
 
-public class NodeImpl<E> implements INode{
-	private static int        RING_LEN = 1000000;
+public class NodeImpl implements INode{
+	private static int        RING_LEN;
 	private InetSocketAddress address;
 	private FingerTable       table;
-	private NodeImpl<E>       successor;
-	private NodeImpl<E>    	  predecessor;
+	private NodeImpl          successor;
+	private NodeImpl    	  predecessor;
 	private boolean           is_stable;
 	private boolean           is_running;
 
-	private StorageServiceImpl<E> storage_proxy;
+	private StorageServiceImpl storage_proxy;
 
-	NodeImpl(InetSocketAddress address, FingerTable fTable) {
+	private NodeImpl(InetSocketAddress address, FingerTable fTable, int RING_LEN) {
+		this.RING_LEN = RING_LEN;
 		this.address = address;
 	}
 
+	public static INode createNode(String ip, int port, FingerTable fTable, int RING_LEN) {
+		InetSocketAddress address = new InetSocketAddress(ip, port);
+		return new NodeImpl(address, fTable, RING_LEN);
+	}
+	
 	public static enum Operation {
 		PUT,
 		APPEND,
@@ -51,7 +58,7 @@ public class NodeImpl<E> implements INode{
 	//server execute a query from client
 	//First calculate the holder for this
 	//data according to the hashcode of key
-	public String NodeImpl exec(String key, String value, Operation oper) {
+	public String exec(String key, String value, Operation oper) {
 		if(is_stable && is_running) {
 			//should operate at current server
 			if(is_belong_me(key)){
@@ -70,7 +77,7 @@ public class NodeImpl<E> implements INode{
 				}
 			}else {
 				int id = calculate(hash(key.hashCode()));
-				send_to_other(table[id], key, value, oper);
+				send_to_other(table.get_node(id), key, value, oper);
 			}
 		}else if(!is_stable && is_running){
 			
@@ -79,25 +86,28 @@ public class NodeImpl<E> implements INode{
 		}
 	}
 
-	//caluculate the right or the most close server id for this hashcode
+	//caluculate the correct or the most close server id for this hashcode
 	private int calculate(int hashcode) {
 		
 	}
 
 	//send the query to appropriate server
-	private void send_to_other(InetSocketAddress socket, String key, String value, Operation oper) {
+	private void send_to_other(NodeImpl node, String key, String value, Operation oper) {
 		
 	}
 
-	public void joinChordRing(NodeImpl<E> node) {
+	@Override
+	public void joinChordRing(NodeImpl node) {
 	    
 	}
 
-	public void leaveChordRing(NodeImpl<E> node) {
+	@Override
+	public void leaveChordRing(NodeImpl node) {
 		
 	}
 
 	public int hash(int id) {
 		return id % RING_LEN;
 	}
+
 }

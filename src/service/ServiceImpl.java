@@ -12,7 +12,7 @@ public class ServiceImpl implements IService{
 		this.client_id = id;
 		socket = new InetSocketAddress(ip, port);
 	}
-	
+
 	//PAD is short for put append delete
 	//those three operaion are quite similar
 	//but GET need got a String type return
@@ -27,7 +27,7 @@ public class ServiceImpl implements IService{
 
 	@Override
 	public String get(String key) {
-		String result = RPC_Call_GET(socket, key, Operation.GET);
+		String result = RPC_Call_GET(socket, key);
 		Debug.debug("Client[" + client_id +"] send get result:" + result);
 		return result;
 	}
@@ -38,7 +38,7 @@ public class ServiceImpl implements IService{
 		if(!ok) {
 			Debug.debug("Client[" + client_id +"] send append key:" + key 
 					+ " value:" + value + " operation failed!");
-		}		
+		}
 	}
 
 	@Override
