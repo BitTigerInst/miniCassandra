@@ -17,10 +17,10 @@ public class StorageServiceImpl<E> implements IStorageService{
 
 	private Options     options;
 	private DB          db;
-	private NodeImpl<E> node;
+	private NodeImpl node;
 	File                file;
 
-	public StorageServiceImpl(NodeImpl<E> node, String name) throws IOException {
+	public StorageServiceImpl(NodeImpl node, String name) throws IOException {
 		this.node = node;
 		File file = new File(name);
 		options = new Options();

@@ -10,7 +10,7 @@ public interface ITransportFactory {
 	/**
 	 * Opens a client transport to a gRPC server.
 	 */
-	boolean RPC_Call_PAD(InetSocketAddress addr, String key, String value);
+	boolean RPC_Call_PAD(String key, String value, Operation oper);
 
-	String  RPC_Call_GET(InetSocketAddress addr, String key, Operation oper);
+	String  RPC_Call_GET(String key);
 }

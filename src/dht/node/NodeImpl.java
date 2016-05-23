@@ -5,8 +5,9 @@ import java.net.*;
 import leveldb.StorageServiceImpl;
 import dht.chord.*;
 import util.*;
+import rpc.*;
 
-public class NodeImpl implements INode{
+public class NodeImpl implements INode, ITransportFactory{
 	private static int        RING_LEN;
 	private InetSocketAddress address;
 	private FingerTable       table;
@@ -14,15 +15,18 @@ public class NodeImpl implements INode{
 	private NodeImpl    	  predecessor;
 	private boolean           is_stable;
 	private boolean           is_running;
+	private ITransportFactory Itrans;
 
 	private StorageServiceImpl storage_proxy;
 
-	private NodeImpl(InetSocketAddress address, FingerTable fTable, int RING_LEN) {
+	private NodeImpl(InetSocketAddress address, FingerTable fTable, int RING_LEN) throws Exception {
 		this.RING_LEN = RING_LEN;
 		this.address = address;
+		Itrans = this;
+		RpcFramework.export(Itrans, address.getPort());
 	}
 
-	public static INode createNode(String ip, int port, FingerTable fTable, int RING_LEN) {
+	public static INode createNode(String ip, int port, FingerTable fTable, int RING_LEN) throws Exception {
 		InetSocketAddress address = new InetSocketAddress(ip, port);
 		return new NodeImpl(address, fTable, RING_LEN);
 	}
@@ -84,30 +88,46 @@ public class NodeImpl implements INode{
 		}else {
 			Debug.debug("Warning: this server is not alived!!");
 		}
+		return null;
 	}
 
 	//caluculate the correct or the most close server id for this hashcode
 	private int calculate(int hashcode) {
+		//TODO
 		
 	}
 
 	//send the query to appropriate server
 	private void send_to_other(NodeImpl node, String key, String value, Operation oper) {
+		//TODO
 		
 	}
 
 	@Override
 	public void joinChordRing(NodeImpl node) {
-	    
+	    //TODO
+		
 	}
 
 	@Override
 	public void leaveChordRing(NodeImpl node) {
+		//TODO
 		
 	}
 
+	//MOD algorithm
 	public int hash(int id) {
 		return id % RING_LEN;
 	}
 
+	@Override
+	public boolean RPC_Call_PAD(String key, String value, Operation oper) {
+		exec(key, value, oper);
+		return true;
+	}
+
+	@Override
+	public String RPC_Call_GET(String key) {
+		return exec(key, null, Operation.GET);
+	}
 }

@@ -1,21 +1,25 @@
 package dht.chord;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
 import util.Debug;
 import dht.node.*;
 
 public class Chord {
-	private ArrayList<INode> NodeList;
+	private static ArrayList<INode> NodeList = new ArrayList<>();
+	private static Chord chord = null;
 	private int RING_LEN;
-
-	private static Chord chord;
 
 	//initiate the finger table for this cluster
 	//according to the ip_list and port_list
 	public static ArrayList<FingerTable>  init_fingertable(ArrayList<String> ip_list, ArrayList<Integer>port_list) {
+		ArrayList<FingerTable> finger_table = new ArrayList<>();
+		//TODO
 		
+	}
+
+	public ArrayList<INode> get_node_list() {
+		return NodeList;
 	}
 
 	public static Chord CreateCluster(int num, int ring_len, ArrayList<String> ip_list, ArrayList<Integer>port_list) {
@@ -39,16 +43,19 @@ public class Chord {
 			String addr = ip_list.get(cnt);
 			int port = port_list.get(cnt);
 			FingerTable table = table_list.get(cnt);
-			NodeList.add(NodeImpl.createNode(addr, port, table, ring_len));
+			try {
+				NodeList.add(NodeImpl.createNode(addr, port, table, ring_len));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			++cnt;
 		}
 
-		chord = new Chord(NodeList, ring_len);
+		chord = new Chord(ring_len);
 		return chord;
 	}
 
-	private Chord(ArrayList<INode> node_list, int RING_LEN) {
-		this.NodeList = node_list;
+	private Chord(int RING_LEN) {
 		this.RING_LEN = RING_LEN;
 	}
 }
