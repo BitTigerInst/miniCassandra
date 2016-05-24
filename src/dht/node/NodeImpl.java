@@ -2,36 +2,42 @@ package dht.node;
 
 import java.net.*;
 
+import leveldb.IStorageService;
 import leveldb.StorageServiceImpl;
 import dht.chord.*;
 import util.*;
 import rpc.*;
 
 public class NodeImpl implements INode, IRpcMethod{
-	private static int        RING_LEN;
+	private int               RING_LEN;
 	private InetSocketAddress address;
 	private FingerTable       table;
+	private static int        file_count = 0;
 	private NodeImpl          successor;
 	private NodeImpl    	  predecessor;
 	private boolean           is_stable;
 	private boolean           is_running;
-	private IRpcMethod Itrans;
-
-	private StorageServiceImpl storage_proxy;
+	private IRpcMethod        Itrans;
+	private IStorageService   storage_proxy;
 
 	private NodeImpl(InetSocketAddress address, FingerTable fTable, int RING_LEN) throws Exception {
 		this.RING_LEN = RING_LEN;
 		this.address = address;
 		Itrans = this;
+		storage_proxy = new StorageServiceImpl(this, generate_file_name());
 		RpcFramework.export(Itrans, address.getPort());
 		System.out.println("Create Server Address:" + address.getHostString() + ", port:" + address.getPort());
+	}
+
+	private String generate_file_name() {
+		return get_addr().toString() + "_" + file_count++;
 	}
 
 	public static INode createNode(String ip, int port, FingerTable fTable, int RING_LEN) throws Exception {
 		InetSocketAddress address = new InetSocketAddress(ip, port);
 		return new NodeImpl(address, fTable, RING_LEN);
 	}
-	
+
 	public static enum Operation {
 		PUT,
 		APPEND,

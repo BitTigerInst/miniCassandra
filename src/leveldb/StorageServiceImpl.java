@@ -13,11 +13,11 @@ import dht.node.NodeImpl;
 import util.Debug;
 
 
-public class StorageServiceImpl<E> implements IStorageService{
+public class StorageServiceImpl implements IStorageService{
 
 	private Options     options;
 	private DB          db;
-	private NodeImpl node;
+	private NodeImpl    node;
 	File                file;
 
 	public StorageServiceImpl(NodeImpl node, String name) throws IOException {
