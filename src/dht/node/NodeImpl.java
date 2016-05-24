@@ -7,7 +7,7 @@ import dht.chord.*;
 import util.*;
 import rpc.*;
 
-public class NodeImpl implements INode, ITransportFactory{
+public class NodeImpl implements INode, IRpcMethod{
 	private static int        RING_LEN;
 	private InetSocketAddress address;
 	private FingerTable       table;
@@ -15,7 +15,7 @@ public class NodeImpl implements INode, ITransportFactory{
 	private NodeImpl    	  predecessor;
 	private boolean           is_stable;
 	private boolean           is_running;
-	private ITransportFactory Itrans;
+	private IRpcMethod Itrans;
 
 	private StorageServiceImpl storage_proxy;
 
@@ -24,6 +24,7 @@ public class NodeImpl implements INode, ITransportFactory{
 		this.address = address;
 		Itrans = this;
 		RpcFramework.export(Itrans, address.getPort());
+		System.out.println("Create Server Address:" + address.getHostString() + ", port:" + address.getPort());
 	}
 
 	public static INode createNode(String ip, int port, FingerTable fTable, int RING_LEN) throws Exception {

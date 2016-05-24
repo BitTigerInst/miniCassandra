@@ -8,6 +8,8 @@ import java.lang.reflect.Proxy;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import util.Debug;
+
 /**
  * RpcFramework
  * 
@@ -27,7 +29,7 @@ public class RpcFramework {
             throw new IllegalArgumentException("service instance == null");
         if (port <= 0 || port > 65535)
             throw new IllegalArgumentException("Invalid port " + port);
-        System.out.println("Export service " + service.getClass().getName() + " on port " + port);
+        Debug.debug("Export service " + service.getClass().getName() + " on port " + port);
         ServerSocket server = new ServerSocket(port);
         for(;;) {
             try {
@@ -90,7 +92,7 @@ public class RpcFramework {
             throw new IllegalArgumentException("Host == null!");
         if (port <= 0 || port > 65535)
             throw new IllegalArgumentException("Invalid port " + port);
-        System.out.println("Get remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
+        Debug.debug("Get remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
         return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] {interfaceClass}, new InvocationHandler() {
             public Object invoke(Object proxy, Method method, Object[] arguments) throws Throwable {
                 Socket socket = new Socket(host, port);

@@ -5,10 +5,12 @@ import rpc.*;
 
 public class ServiceImpl implements IService{
 
-	ITransportFactory IRpc;
+	IRpcMethod IRpc;
 	int client_id;
-	ServiceImpl(int id, String ip, int port) {
+
+	public ServiceImpl(int id, IRpcMethod service_provider) {
 		this.client_id = id;
+		this.IRpc = service_provider;
 	}
 
 	//PAD is short for put append delete

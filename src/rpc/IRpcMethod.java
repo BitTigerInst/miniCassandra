@@ -1,12 +1,11 @@
 package rpc;
 
-import java.net.InetSocketAddress;
 import dht.node.NodeImpl.Operation;
 
 /**
  * Transport factory for establishing gRPC connections from clients to a remote server.
  */
-public interface ITransportFactory {
+public interface IRpcMethod {
 	/**
 	 * Opens a client transport to a gRPC server.
 	 */
