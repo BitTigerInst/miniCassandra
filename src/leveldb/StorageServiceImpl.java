@@ -58,6 +58,7 @@ public class StorageServiceImpl implements IStorageService{
 		Debug.debug("Node[" + node.get_hashcode() + "] DELETE Key:" + key);
 	}
 
+	@Override
 	public void destroy() {
 		try {
 			db.close();

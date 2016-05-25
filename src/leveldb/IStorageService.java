@@ -8,4 +8,6 @@ public interface IStorageService {
 	public String get(String key);
 	
 	public void delete(String key);
+	
+	public void destroy();
 }

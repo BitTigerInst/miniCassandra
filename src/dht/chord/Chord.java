@@ -1,9 +1,9 @@
 package dht.chord;
 
 import java.util.ArrayList;
-
 import util.Debug;
-import dht.node.*;
+import dht.node.INode;
+import dht.node.NodeImpl;
 
 public class Chord {
 	private static ArrayList<INode> NodeList = new ArrayList<>();
@@ -16,6 +16,8 @@ public class Chord {
 		ArrayList<FingerTable> finger_table = new ArrayList<>();
 		//TODO
 		
+		
+		return finger_table;
 	}
 
 	public ArrayList<INode> get_node_list() {
@@ -28,17 +30,15 @@ public class Chord {
 		}
 
 		if(ip_list.size()!=port_list.size() || ip_list.size()!=num) {
-			Debug.debug("Cluster create failed, IP list or Port list size error");
-			return null;
+			throw new IllegalArgumentException("Cluster create failed, IP list or Port list size error");
+		}
+
+		ArrayList<FingerTable> table_list = init_fingertable(ip_list, port_list);
+		if(table_list.size()!=ip_list.size()) {
+			throw new IllegalArgumentException("Cluster create failed, FingerTable list size error");
 		}
 
 		int cnt = 0;
-		ArrayList<FingerTable> table_list = init_fingertable(ip_list, port_list);
-		if(table_list.size()!=ip_list.size()) {
-			Debug.debug("Cluster create failed, FingerTable list size error");
-			return null;
-		}
-
 		while(cnt < num) {
 			String addr = ip_list.get(cnt);
 			int port = port_list.get(cnt);
@@ -50,12 +50,19 @@ public class Chord {
 			}
 			++cnt;
 		}
-
 		chord = new Chord(ring_len);
 		return chord;
 	}
 
+	public static void DestroyCluster() {
+		for(INode node:NodeList) {
+			node.destroy();
+		}
+	}
+	
 	private Chord(int RING_LEN) {
 		this.RING_LEN = RING_LEN;
+		Debug.debug("Creating a cluster RING_LEN:" + RING_LEN + 
+						", contain " + NodeList + "nodes.");
 	}
 }

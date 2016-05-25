@@ -16,7 +16,12 @@ import util.Debug;
  * @author william.liangf
  */
 public class RpcFramework {
+	public boolean running;
 
+	public RpcFramework(boolean running) {
+		this.running = running;
+	}
+	
     /**
      * 暴露服务
      * 
@@ -24,14 +29,14 @@ public class RpcFramework {
      * @param port 服务端口
      * @throws Exception
      */
-    public static void export(final Object service, int port) throws Exception {
+    public void export(final Object service, int port) throws Exception {
         if (service == null)
             throw new IllegalArgumentException("service instance == null");
         if (port <= 0 || port > 65535)
             throw new IllegalArgumentException("Invalid port " + port);
         Debug.debug("Export service " + service.getClass().getName() + " on port " + port);
         ServerSocket server = new ServerSocket(port);
-        for(;;) {
+        while(running) {
             try {
             	//a blocking method
                 final Socket socket = server.accept();

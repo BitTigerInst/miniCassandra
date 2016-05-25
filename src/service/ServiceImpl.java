@@ -1,10 +1,9 @@
 package service;
 import dht.node.NodeImpl.Operation;
 import util.Debug;
-import rpc.*;
+import rpc.IRpcMethod;
 
 public class ServiceImpl implements IService{
-
 	IRpcMethod IRpc;
 	int client_id;
 
@@ -18,11 +17,9 @@ public class ServiceImpl implements IService{
 	//but GET need got a String type return
 	@Override
 	public void put(String key, String value) {
-		boolean ok = IRpc.RPC_Call_PAD(key, value, Operation.PUT);
-		if(!ok) {
-			Debug.debug("Client[" + client_id +"] send put key:" + key 
-					+ " value:" + value + " operation failed!");
-		}
+		IRpc.RPC_Call_PAD(key, value, Operation.PUT);
+		Debug.debug("Client[" + client_id +"] send put key:" + key 
+				    + " value:" + value + " operation failed!");
 	}
 
 	@Override
@@ -34,20 +31,15 @@ public class ServiceImpl implements IService{
 
 	@Override
 	public void append(String key, String value) {
-		boolean ok = IRpc.RPC_Call_PAD(key, value, Operation.APPEND);
-		if(!ok) {
-			Debug.debug("Client[" + client_id +"] send append key:" + key 
+		IRpc.RPC_Call_PAD(key, value, Operation.APPEND);
+		Debug.debug("Client[" + client_id +"] send append key:" + key 
 					+ " value:" + value + " operation failed!");
-		}
 	}
 
 	@Override
 	public void delete(String key, String value) {
-		boolean ok = IRpc.RPC_Call_PAD(key, value, Operation.DELETE);
-		if(!ok) {
-			Debug.debug("Client[" + client_id +"] send delete key:" + key 
+		IRpc.RPC_Call_PAD(key, value, Operation.DELETE);
+		Debug.debug("Client[" + client_id +"] send delete key:" + key 
 					+ " value:" + value + " operation failed!");
-		}		
 	}
-	
 }

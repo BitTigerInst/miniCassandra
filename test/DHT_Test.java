@@ -37,7 +37,8 @@ public class DHT_Test {
 			System.out.println("expect:Team:Warriors, but got" + curry_team);
 			return;
 		}
-
+		
+		Chord.DestroyCluster();
 		System.out.println("passed basic operation test");
 	}
 	

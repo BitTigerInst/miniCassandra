@@ -19,4 +19,6 @@ public interface INode {
 	public void joinChordRing(NodeImpl node);
 	
 	public void leaveChordRing(NodeImpl node);
+	
+	public void destroy();
 }

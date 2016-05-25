@@ -1,18 +1,17 @@
 package dht.node;
 
 import java.net.*;
-
 import leveldb.IStorageService;
 import leveldb.StorageServiceImpl;
-import dht.chord.*;
-import util.*;
-import rpc.*;
+import dht.chord.FingerTable;
+import util.Debug;
+import rpc.IRpcMethod;
+import rpc.RpcFramework;
 
 public class NodeImpl implements INode, IRpcMethod{
 	private int               RING_LEN;
 	private InetSocketAddress address;
 	private FingerTable       table;
-	private static int        file_count = 0;
 	private NodeImpl          successor;
 	private NodeImpl    	  predecessor;
 	private boolean           is_stable;
@@ -20,15 +19,26 @@ public class NodeImpl implements INode, IRpcMethod{
 	private IRpcMethod        Itrans;
 	private IStorageService   storage_proxy;
 	private int               hashcode;
+	private RpcFramework      rpc_framework;
+	private static int        file_count = 0;
 
+	
 	private NodeImpl(InetSocketAddress address, FingerTable fTable, int RING_LEN) throws Exception {
 		this.RING_LEN = RING_LEN;
 		this.address = address;
 		this.hashcode = hash(this.hashCode());
 		Itrans = this;
 		storage_proxy = new StorageServiceImpl(this, generate_file_name());
-		RpcFramework.export(Itrans, address.getPort());
+		rpc_framework = new RpcFramework(true);
+		rpc_framework.export(Itrans, address.getPort());
 		System.out.println("Create Server Address:" + address.getHostString() + ", port:" + address.getPort());
+	}
+	
+	public static enum Operation {
+		PUT,
+		APPEND,
+		GET,
+		DELETE,
 	}
 
 	private String generate_file_name() {
@@ -40,13 +50,12 @@ public class NodeImpl implements INode, IRpcMethod{
 		return new NodeImpl(address, fTable, RING_LEN);
 	}
 
-	public static enum Operation {
-		PUT,
-		APPEND,
-		GET,
-		DELETE,
+	@Override
+	public void destroy() {
+		this.storage_proxy.destroy();	
+		this.rpc_framework.running = false;
 	}
-
+	
 	public InetAddress get_addr() {
 		return this.address.getAddress();
 	}
@@ -59,6 +68,9 @@ public class NodeImpl implements INode, IRpcMethod{
 		return this.address.getPort();
 	}
 
+	/*
+	 * judge if this operation own to current server
+	 */
 	public boolean is_belong_me(String key) {
 		int hashcode = hash(key.hashCode());
 		if(hashcode > this.predecessor.get_hashcode() && hashcode <= this.get_hashcode()) {
@@ -68,12 +80,13 @@ public class NodeImpl implements INode, IRpcMethod{
 		}
 	}
 
-	//server execute a query from client
-	//First calculate the holder for this
-	//data according to the hashcode of key
+	/* 
+	 * Firstly calculating the owner for this
+	 * operation according to the hashcode of key.
+	 * Secondly executing the operation.
+	 */
 	public String exec(String key, String value, Operation oper) {
 		if(is_stable && is_running) {
-			//should operate at current server
 			if(is_belong_me(key)){
 				switch(oper) {
 				case PUT:
@@ -100,19 +113,20 @@ public class NodeImpl implements INode, IRpcMethod{
 		return null;
 	}
 
-	//caluculate the correct or the most close server id for this hashcode
+	/*
+	 * caluculate the correct or the most close server id for this hashcode
+	 */
 	private int calculate(int hashcode) {
-		int idx = 0;
 		int list_size = table.get_list_size();
 		NodeImpl first_node = table.get_node(0);
-		NodeImpl last_node = table.get_node(table.get_list_size()-1);
+		NodeImpl last_node = table.get_node(table.get_list_size() - 1);
 		if(list_size==1 || hashcode==first_node.hashcode) {
 			return 0;
 		}
 		if(hashcode>=last_node.hashcode || (hashcode>=0 && hashcode<first_node.hashcode)){
 			return list_size - 1;
 		}
-		for(idx = 1;idx<=list_size-2;++idx) {
+		for(int idx = 1;idx<=list_size-2;++idx) {
 			NodeImpl node = table.get_node(idx);
 			NodeImpl node_succ = table.get_node(idx + 1);
 			if(hashcode>=node.hashcode && hashcode<node_succ.hashcode) {
@@ -122,7 +136,10 @@ public class NodeImpl implements INode, IRpcMethod{
 		return -1;
 	}
 
-	//send the query to appropriate server
+	/*
+	 * send the operation to appropriate server
+	 * by searching finger table
+	 */
 	private String send_to_other(NodeImpl node, String key, String value, Operation oper) {
 		try {
 			IRpcMethod service = RpcFramework.refer(IRpcMethod.class, node.get_addr().getHostAddress(), node.get_port());
@@ -150,15 +167,13 @@ public class NodeImpl implements INode, IRpcMethod{
 		
 	}
 
-	//MOD algorithm
 	public int hash(int id) {
 		return id % RING_LEN;
 	}
 
 	@Override
-	public boolean RPC_Call_PAD(String key, String value, Operation oper) {
+	public void RPC_Call_PAD(String key, String value, Operation oper) {
 		exec(key, value, oper);
-		return true;
 	}
 
 	@Override
