@@ -19,10 +19,12 @@ public class NodeImpl implements INode, IRpcMethod{
 	private boolean           is_running;
 	private IRpcMethod        Itrans;
 	private IStorageService   storage_proxy;
+	private int               hashcode;
 
 	private NodeImpl(InetSocketAddress address, FingerTable fTable, int RING_LEN) throws Exception {
 		this.RING_LEN = RING_LEN;
 		this.address = address;
+		this.hashcode = hash(this.hashCode());
 		Itrans = this;
 		storage_proxy = new StorageServiceImpl(this, generate_file_name());
 		RpcFramework.export(Itrans, address.getPort());
@@ -50,7 +52,7 @@ public class NodeImpl implements INode, IRpcMethod{
 	}
 
 	public int get_hashcode() {
-		return hash(this.hashCode());
+		return hashcode;
 	}
 
 	public int get_port() {
@@ -88,7 +90,7 @@ public class NodeImpl implements INode, IRpcMethod{
 				}
 			}else {
 				int id = calculate(hash(key.hashCode()));
-				send_to_other(table.get_node(id), key, value, oper);
+				return send_to_other(table.get_node(id), key, value, oper);
 			}
 		}else if(!is_stable && is_running){
 			
@@ -100,14 +102,40 @@ public class NodeImpl implements INode, IRpcMethod{
 
 	//caluculate the correct or the most close server id for this hashcode
 	private int calculate(int hashcode) {
-		//TODO
-		
+		int idx = 0;
+		int list_size = table.get_list_size();
+		NodeImpl first_node = table.get_node(0);
+		NodeImpl last_node = table.get_node(table.get_list_size()-1);
+		if(list_size==1 || hashcode==first_node.hashcode) {
+			return 0;
+		}
+		if(hashcode>=last_node.hashcode || (hashcode>=0 && hashcode<first_node.hashcode)){
+			return list_size - 1;
+		}
+		for(idx = 1;idx<=list_size-2;++idx) {
+			NodeImpl node = table.get_node(idx);
+			NodeImpl node_succ = table.get_node(idx + 1);
+			if(hashcode>=node.hashcode && hashcode<node_succ.hashcode) {
+				return idx;
+			}
+		}
+		return -1;
 	}
 
 	//send the query to appropriate server
-	private void send_to_other(NodeImpl node, String key, String value, Operation oper) {
-		//TODO
-		
+	private String send_to_other(NodeImpl node, String key, String value, Operation oper) {
+		try {
+			IRpcMethod service = RpcFramework.refer(IRpcMethod.class, node.get_addr().getHostAddress(), node.get_port());
+			switch(oper) {
+			case GET:
+				return service.RPC_Call_GET(key);
+			default:
+				service.RPC_Call_PAD(key, value, oper);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	@Override
