@@ -22,7 +22,6 @@ public class NodeImpl implements INode, IRpcMethod{
 	private RpcFramework      rpc_framework;
 	private static int        file_count = 0;
 
-	
 	private NodeImpl(InetSocketAddress address, FingerTable fTable, int RING_LEN) throws Exception {
 		this.RING_LEN = RING_LEN;
 		this.address = address;
@@ -53,7 +52,7 @@ public class NodeImpl implements INode, IRpcMethod{
 	@Override
 	public void destroy() {
 		this.storage_proxy.destroy();	
-		this.rpc_framework.running = false;
+		this.rpc_framework.destroy();
 	}
 	
 	public InetAddress get_addr() {

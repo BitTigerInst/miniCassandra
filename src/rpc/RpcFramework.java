@@ -21,7 +21,7 @@ public class RpcFramework {
 	public RpcFramework(boolean running) {
 		this.running = running;
 	}
-	
+
     /**
      * 暴露服务
      * 
@@ -40,37 +40,39 @@ public class RpcFramework {
             try {
             	//a blocking method
                 final Socket socket = server.accept();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            try {
-                                ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-                                try {
-                                    String methodName = input.readUTF();
-                                    Class<?>[] parameterTypes = (Class<?>[])input.readObject();
-                                    Object[] arguments = (Object[])input.readObject();
-                                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-                                    try {
-                                        Method method = service.getClass().getMethod(methodName, parameterTypes);
-                                        Object result = method.invoke(service, arguments);
-                                        output.writeObject(result);
-                                    } catch (Throwable t) {
-                                        output.writeObject(t);
-                                    } finally {
-                                        output.close();
-                                    }
-                                } finally {
-                                    input.close();
-                                }
-                            } finally {
-                                socket.close();
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
+                if(running) {
+	                new Thread(new Runnable() {
+	                    @Override
+	                    public void run() {
+	                        try {
+	                            try {
+	                                ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+	                                try {
+	                                    String methodName = input.readUTF();
+	                                    Class<?>[] parameterTypes = (Class<?>[])input.readObject();
+	                                    Object[] arguments = (Object[])input.readObject();
+	                                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+	                                    try {
+	                                        Method method = service.getClass().getMethod(methodName, parameterTypes);
+	                                        Object result = method.invoke(service, arguments);
+	                                        output.writeObject(result);
+	                                    } catch (Throwable t) {
+	                                        output.writeObject(t);
+	                                    } finally {
+	                                        output.close();
+	                                    }
+	                                } finally {
+	                                    input.close();
+	                                }
+	                            } finally {
+	                                socket.close();
+	                            }
+	                        } catch (Exception e) {
+	                            e.printStackTrace();
+	                        }
+	                    }
+	                }).start();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -98,6 +100,7 @@ public class RpcFramework {
         if (port <= 0 || port > 65535)
             throw new IllegalArgumentException("Invalid port " + port);
         Debug.debug("Get remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
+
         return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] {interfaceClass}, new InvocationHandler() {
             public Object invoke(Object proxy, Method method, Object[] arguments) throws Throwable {
                 Socket socket = new Socket(host, port);
@@ -127,4 +130,7 @@ public class RpcFramework {
         });
     }
 
+    public void destroy() {
+    	this.running = false;
+    }
 }
