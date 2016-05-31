@@ -11,12 +11,9 @@ import dht.node.NodeImpl.Type;
  * Transport factory for establishing gRPC connections from clients to a remote server.
  */
 public interface IRpcMethod {
-	
-	/*
-	 * 
-	 */
-	void RPC_UpdateAllServerFingerTable(Type type, int hashcode);
-	
+
+	void RPC_UpdateServerFingerTable(Type type, InetSocketAddress addr,int hashcode);
+
 	ArrayList<InetSocketAddress> RPC_Succ_update_finger_table(Type type, int hashcode);
 	
 	InetSocketAddress RPC_get_successor(int hashcode);
@@ -27,12 +24,12 @@ public interface IRpcMethod {
 	 *  rpc interface for join chord ring
 	 */
 	ArrayList<InetSocketAddress> RPC_JoinChordRing(NodeImpl node);
-	
+
 	/*
 	 *  rpc interface for leave chord ring
 	 */	
 	void RPC_LeaveChordRing(NodeImpl node);
-	
+
 	/*
 	 *  rpc interface for Operation Put, Append, Delete
 	 */

@@ -299,7 +299,7 @@ public class NodeImpl implements INode, IRpcMethod{
 	}
 
 	@Override
-	public void RPC_UpdateAllServerFingerTable(Type type, int hashcode) {
+	public void RPC_UpdateServerFingerTable(Type type, InetSocketAddress addr, int hashcode) {
 		
 	}
 
@@ -322,8 +322,15 @@ public class NodeImpl implements INode, IRpcMethod{
 		return list;
 	}
 
-	public void update_all_related_server_ftable() {
-		//TODO
+	public void update_all_related_server_ftable(Type type) {
+		switch(type) {
+		case JOIN:
+			
+			break;
+		case LEAVE:
+			
+			break;
+		}
 	}
 
 	@Override
@@ -331,12 +338,12 @@ public class NodeImpl implements INode, IRpcMethod{
 		switch(type) {
 		case JOIN:
 			//1.update the finger table of all related server
-			update_all_related_server_ftable();
+			update_all_related_server_ftable(type);
 			//2.create a new Finger table for new node
 			return create_finger_table();
 		case LEAVE:
 			//update the finger table of all related server
-			update_all_related_server_ftable();
+			update_all_related_server_ftable(type);
 			break;
 		}
 		return null;

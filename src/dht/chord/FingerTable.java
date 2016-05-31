@@ -24,6 +24,16 @@ public class FingerTable {
 		return starts.size();
 	}
 
+	public void replace(InetSocketAddress var1, InetSocketAddress var2) {
+		int idx = starts.indexOf(var1);
+		if(idx > 0 ) {
+			starts.remove(idx);
+			starts.add(idx, var2);
+		}else {
+			System.out.println("replace error, finger table didn't contain var1");
+		}
+	}
+	
 	//get a node form finger table accroding to the index
 	public InetSocketAddress get_node(int index) {
 		return starts.get(index);
