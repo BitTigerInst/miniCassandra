@@ -17,8 +17,8 @@ public interface INode {
 	public String exec(String key, String value, Operation oper);
 
 	public void joinChordRing(NodeImpl node);
-	
-	public void leaveChordRing(NodeImpl node);
-	
+
+	public void leaveChordRing();
+
 	public void destroy();
 }
