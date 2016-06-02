@@ -2,6 +2,7 @@ package dht.node;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.lang.Math;
 import java.util.ArrayList;
 
 import leveldb.IStorageService;
@@ -13,6 +14,7 @@ import dht.chord.FingerTable;
 
 public class NodeImpl implements INode, IRpcMethod{
 	private int               RING_LEN;
+	private int				  bits;
 	private InetSocketAddress address;
 	private FingerTable       table;
 	private InetSocketAddress predecessor;
@@ -24,8 +26,9 @@ public class NodeImpl implements INode, IRpcMethod{
 	private RpcFramework      rpc_framework;
 	private static int        file_count = 0;
 
-	private NodeImpl(InetSocketAddress address, FingerTable fTable, int RING_LEN) throws Exception {
-		this.RING_LEN = RING_LEN;
+	private NodeImpl(InetSocketAddress address, FingerTable fTable, int bits) throws Exception {
+		this.bits = bits;
+		this.RING_LEN = (int) Math.pow(2.0, bits);
 		this.address = address;
 		this.hashcode = hash(this.hashCode());
 		Itrans = this;
@@ -79,7 +82,11 @@ public class NodeImpl implements INode, IRpcMethod{
 	 */
 	public boolean is_belong_me(int hashcode) {
 		int prede_hash = hash(predecessor.getAddress().hashCode());
-		if(hashcode > prede_hash && hashcode <= this.get_hashcode()) {
+		// three cases
+		if((prede_hash - this.get_hashcode() == 0) ||
+				(prede_hash - this.get_hashcode() < 0 && hashcode > prede_hash && hashcode <= this.get_hashcode()) ||
+				(prede_hash - this.get_hashcode() > 0 && ((hashcode >= 0 && hashcode <= this.get_hashcode()) ||
+													(hashcode < RING_LEN && hashcode > prede_hash))))  {
 			return true;
 		}else {
 			return false;
@@ -123,6 +130,7 @@ public class NodeImpl implements INode, IRpcMethod{
 	 * caluculate the correct or the most close server id for this hashcode
 	 */
 	private int calculate(int hashcode) {
+		// table size is fixed? log_2^(ring_len)
 		int list_size = table.get_list_size();
 		InetSocketAddress first_node = table.get_node(0);
 		InetSocketAddress last_node = table.get_node(table.get_list_size() - 1);
@@ -255,23 +263,39 @@ public class NodeImpl implements INode, IRpcMethod{
 		return table_list;
 	}
 	
+	private ArrayList<InetSocketAddress> init_finger_table(InetSocketAddress succ_addr) {
+		ArrayList<InetSocketAddress> table_list = null;
+		InetSocketAddress next_addr = succ_addr;
+		int next_id = next_addr.hashCode();
+		int add = 1;
+		for (int i = 0; i < bits; i++) {
+			if (this.hashcode + add > next_id) { // change to in_range
+				next_addr = RPC_get_successor(this.hashcode + add);
+				next_id = next_addr.hashCode();
+			}
+			table_list.add(next_addr);
+			add = 2*add;
+		}
+		return table_list;
+	}
+	
 	private ArrayList<InetSocketAddress> handle_join_chord_ring(NodeImpl node) {
 		ArrayList<InetSocketAddress> table_list = null;
 		InetSocketAddress succ_addr = RPC_get_successor(hash(node.hashCode()));
+		table_list = init_finger_table(succ_addr);
 		//1.generate a finger table for new server
-		IRpcMethod service;
-		try {
-			service = RpcFramework.refer(IRpcMethod.class, succ_addr.getAddress().getHostAddress(), succ_addr.getPort());
-			table_list = service.RPC_Succ_update_finger_table(Type.JOIN, node.get_hashcode());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		IRpcMethod service;
+//		try {
+//			service = RpcFramework.refer(IRpcMethod.class, succ_addr.getAddress().getHostAddress(), succ_addr.getPort());
+//			table_list = service.RPC_Succ_update_finger_table(Type.JOIN, node.get_hashcode());
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 		
 		//1.update finger table for other server?
 		//  achieve this operation must need a RPC method
 		
 		
-		//2.create a finger table for the new node
 		
 		//3.move data(belong to new node) from other server to new node
 		return table_list;
