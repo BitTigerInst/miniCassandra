@@ -4,13 +4,13 @@
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="src" path="demo"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="/Users/ustczmk/GitReporsitory/miniCassandra/lib/leveldb-0.8-SNAPSHOT-sources.jar"/>
-	<classpathentry kind="lib" path="/Users/ustczmk/GitReporsitory/miniCassandra/lib/leveldb-0.8-SNAPSHOT-test-sources.jar"/>
-	<classpathentry kind="lib" path="/Users/ustczmk/GitReporsitory/miniCassandra/lib/leveldb-0.8-SNAPSHOT-tests.jar"/>
-	<classpathentry kind="lib" path="/Users/ustczmk/GitReporsitory/miniCassandra/lib/leveldb-0.8-SNAPSHOT-uber.jar"/>
-	<classpathentry kind="lib" path="/Users/ustczmk/GitReporsitory/miniCassandra/lib/leveldb-0.8-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="/Users/ustczmk/GitReporsitory/miniCassandra/lib/leveldb-api-0.8-SNAPSHOT-sources.jar"/>
-	<classpathentry kind="lib" path="/Users/ustczmk/GitReporsitory/miniCassandra/lib/leveldb-api-0.8-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="/Users/ustczmk/GitReporsitory/miniCassandra/lib/leveldb-benchmark-0.8-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/leveldb-0.8-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="lib" path="lib/leveldb-0.8-SNAPSHOT-test-sources.jar"/>
+	<classpathentry kind="lib" path="lib/leveldb-0.8-SNAPSHOT-tests.jar"/>
+	<classpathentry kind="lib" path="lib/leveldb-0.8-SNAPSHOT-uber.jar"/>
+	<classpathentry kind="lib" path="lib/leveldb-0.8-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/leveldb-api-0.8-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="lib" path="lib/leveldb-api-0.8-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/leveldb-benchmark-0.8-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
