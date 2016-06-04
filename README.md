@@ -23,4 +23,10 @@ Delete a Key/Value pair from database
 ## Requirements
 1.Java >= 1.8
 
+## Storage Impl
+This part we use a [level-db](https://github.com/dain/leveldb) java version product.
+In directory lib, we already provide all of its dependency library.
+
+Serveral months later, we will provide all project's dependency to user in maven.
+
 ## Getting Started
