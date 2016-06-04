@@ -7,16 +7,41 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.ServerSocket;
 import java.net.Socket;
-
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import util.Check;
 import util.Debug;
+
+class RPC_Entry{
+	Class<?> interfaceClass;
+	String host;
+	int port;
+
+	public RPC_Entry(Class<?> interfaceClass, String host, int port) {
+		this.interfaceClass = interfaceClass;
+		this.host = host;
+		this.port = port;
+	}
+}
 
 /**
  * RpcFramework
  * 
- * @author william.liangf
  */
 public class RpcFramework {
-	public boolean running;
+	
+	public static <T> T is_contain(Class<T> interfaceClass, final String host, final int port) {
+		for(Entry<RPC_Entry, Object> e: maps.entrySet()) {
+			RPC_Entry entry = e.getKey();
+			if(entry.interfaceClass.toString().equals(interfaceClass.toString())  && entry.host.equals(host) && entry.port==port) {
+				return (T) e.getValue();
+			}
+		}
+		return null;
+	}
+
+	private boolean running;
+	static ConcurrentHashMap<RPC_Entry, Object> maps = new ConcurrentHashMap<>();
 
 	public RpcFramework(boolean running) {
 		this.running = running;
@@ -91,43 +116,52 @@ public class RpcFramework {
      */
     @SuppressWarnings("unchecked")
     public static <T> T refer(final Class<T> interfaceClass, final String host, final int port) throws Exception {
-        if (interfaceClass == null)
-            throw new IllegalArgumentException("Interface class == null");
-        if (! interfaceClass.isInterface())
-            throw new IllegalArgumentException("The " + interfaceClass.getName() + " must be interface class!");
-        if (host == null || host.length() == 0)
-            throw new IllegalArgumentException("Host == null!");
-        if (port <= 0 || port > 65535)
-            throw new IllegalArgumentException("Invalid port " + port);
-        Debug.debug("Get remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
+        Check.check_null(interfaceClass, "null interface class");
+        Check.check_bool(interfaceClass.isInterface(), "invalid interfaceClass");
+        Check.check_null(host, "invalid host");
+        Check.check_bool(host.length()!=0, "invalide host length");
+        Check.check_bool(port>0, "invalid port");
+        Check.check_bool(port<=65535, "invalid port");
 
-        return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] {interfaceClass}, new InvocationHandler() {
-            public Object invoke(Object proxy, Method method, Object[] arguments) throws Throwable {
-                Socket socket = new Socket(host, port);
-                try {
-                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-                    try {
-                        output.writeUTF(method.getName());
-                        output.writeObject(method.getParameterTypes());
-                        output.writeObject(arguments);
-                        ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-                        try {
-                            Object result = input.readObject();
-                            if (result instanceof Throwable) {
-                                throw (Throwable) result;
-                            }
-                            return result;
-                        } finally {
-                            input.close();
-                        }
-                    } finally {
-                        output.close();
-                    }
-                } finally {
-                    socket.close();
-                }
-            }
-        });
+        synchronized(maps) {
+	        T result = is_contain(interfaceClass, host, port);
+	        if(result==null) {
+	        	result = (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] {interfaceClass}, new InvocationHandler() {
+	                public Object invoke(Object proxy, Method method, Object[] arguments) throws Throwable {
+	                    Socket socket = new Socket(host, port);
+	                    try {
+	                        ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+	                        try {
+	                            output.writeUTF(method.getName());
+	                            output.writeObject(method.getParameterTypes());
+	                            output.writeObject(arguments);
+	                            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+	                            try {
+	                                Object result = input.readObject();
+	                                if (result instanceof Throwable) {
+	                                    throw (Throwable) result;
+	                                }
+	                                return result;
+	                            } finally {
+	                                input.close();
+	                            }
+	                        } finally {
+	                            output.close();
+	                        }
+	                    } finally {
+	                        socket.close();
+	                    }
+	                }
+	            });
+	        	RPC_Entry new_rpc_entry = new RPC_Entry(interfaceClass, host, port);
+	        	maps.put(new_rpc_entry, result);
+	            Debug.debug("Create remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
+	        }
+	        else {
+	            Debug.debug("Get cached Remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
+	        }
+	        return result;
+        }
     }
 
     public void destroy() {
