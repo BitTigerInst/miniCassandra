@@ -24,8 +24,7 @@ public class FingerTable {
 		return starts.size();
 	}
 
-	public void replace(InetSocketAddress var1, InetSocketAddress var2) {
-		int idx = starts.indexOf(var1);
+	public void replace(int idx, InetSocketAddress var2) {
 		if(idx > 0 ) {
 			starts.remove(idx);
 			starts.add(idx, var2);

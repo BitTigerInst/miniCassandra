@@ -12,13 +12,21 @@ import dht.node.NodeImpl.Type;
  */
 public interface IRpcMethod {
 
-	void RPC_UpdateServerFingerTable(Type type, InetSocketAddress addr,int hashcode);
+	void RPC_UpdateServerFingerTable(Type type, InetSocketAddress addr,int hashcode, int i);
 
-	ArrayList<InetSocketAddress> RPC_Succ_update_finger_table(Type type, int hashcode);
+	// ArrayList<InetSocketAddress> RPC_Succ_update_finger_table(Type type, int hashcode);
 	
 	InetSocketAddress RPC_get_successor(int hashcode);
 	
+	InetSocketAddress RPC_get_predecessor(int hashcode);
+	
 	InetSocketAddress RPC_get_succ();
+	
+	InetSocketAddress RPC_get_pred();
+	
+	ArrayList<String> RPC_get_remotedatq();
+	
+	void RPC_change_pred(InetSocketAddress addr);
 	
 	/*
 	 *  rpc interface for join chord ring
@@ -28,7 +36,7 @@ public interface IRpcMethod {
 	/*
 	 *  rpc interface for leave chord ring
 	 */	
-	void RPC_LeaveChordRing(NodeImpl node);
+	void RPC_LeaveChordRing();
 
 	/*
 	 *  rpc interface for Operation Put, Append, Delete

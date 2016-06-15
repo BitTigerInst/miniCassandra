@@ -16,7 +16,7 @@ import util.Debug;
 public class StorageServiceImpl implements IStorageService{
 
 	private Options     options;
-	private DB          db;
+	public  DB          db;
 	private NodeImpl    node;
 	File                file;
 
