@@ -241,7 +241,7 @@ public class NodeImpl implements INode, IRpcMethod{
 			IRpcMethod service = RpcFramework.refer(IRpcMethod.class, 
 														successor.getAddress().getHostAddress(), 
 																successor.getPort());
-			service.RPC_LeaveChordRing(this);
+			service.RPC_LeaveChordRing();
 			Debug.debug("Server " + this.get_hashcode() + " is leaving the ring succesfully");
 		} catch(Exception e) {
 			e.printStackTrace();
