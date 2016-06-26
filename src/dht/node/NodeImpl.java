@@ -29,7 +29,7 @@ public class NodeImpl implements INode, IRpcMethod{
 	private RpcFramework      rpc_framework;
 	private static int        file_count = 0;
 
-	private NodeImpl(InetSocketAddress address, FingerTable fTable, int bits) throws Exception {
+	private NodeImpl(InetSocketAddress address, int bits) throws Exception {
 		this.bits = bits;
 		this.RING_LEN = (int) Math.pow(2.0, bits);
 		this.address = address;
@@ -57,9 +57,9 @@ public class NodeImpl implements INode, IRpcMethod{
 		return get_addr().toString() + "_" + file_count++;
 	}
 
-	public static INode createNode(String ip, int port, FingerTable fTable, int RING_LEN) throws Exception {
+	public static INode createNode(String ip, int port, int RING_LEN) throws Exception {
 		InetSocketAddress address = new InetSocketAddress(ip, port);
-		return new NodeImpl(address, fTable, RING_LEN);
+		return new NodeImpl(address, RING_LEN);
 	}
 
 	@Override
