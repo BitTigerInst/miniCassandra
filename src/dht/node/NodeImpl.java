@@ -28,6 +28,8 @@ public class NodeImpl implements INode, IRpcMethod{
 	private int               hashcode;
 	private RpcFramework      rpc_framework;
 	private static int        file_count = 0;
+	private static int        MAX_WAIT_STABLE_CYCLE = 30;
+	private static int        WAIT_STABLE_CYCLE_MS = 1000;
 
 	private NodeImpl(InetSocketAddress address, int bits) throws Exception {
 		this.bits = bits;
@@ -83,12 +85,12 @@ public class NodeImpl implements INode, IRpcMethod{
 	
 	private boolean in_range(int id, int left, int right) {
 		// three cases
-		if((left - right == 0) ||
+		if ((left - right == 0 && left == id) ||
 				(left - right < 0 && id > left && id <= right) ||
 				(left - right > 0 && ((id >= 0 && id <= right) ||
-													(id < RING_LEN && id > left))))  {
+													(id < RING_LEN && id > left)))) {
 			return true;
-		}else {
+		} else {
 			return false;
 		}
 	}
@@ -101,35 +103,54 @@ public class NodeImpl implements INode, IRpcMethod{
 		return in_range(hashcode, prede_hash, this.get_hashcode());
 	}
 
+	/*
+	 * wait the cluster be stable
+	 */
+	public void wait_stable() {
+		int cycle = 0;
+		while (!is_stable && cycle < MAX_WAIT_STABLE_CYCLE) {
+			try {
+				Thread.sleep(WAIT_STABLE_CYCLE_MS);
+			} catch(InterruptedException e) {
+				e.printStackTrace();
+			}
+			++cycle;
+		}
+		if (cycle==MAX_WAIT_STABLE_CYCLE) {
+			throw new RuntimeException("Join Chord Ring failure");
+		}
+	}
+
 	/* 
 	 * Firstly calculating the owner for this
 	 * operation according to the hashcode of key.
 	 * Secondly executing the operation.
 	 */
 	public String exec(String key, String value, Operation oper) {
-		if(is_stable && is_running) {
-			if(is_belong_me(hash(key.hashCode()))) {
-				switch(oper) {
-				case PUT:
-					storage_proxy.put(key, value);
-					break;
-				case APPEND:
-					storage_proxy.append(key, value);
-					break;
-				case GET:
-					return storage_proxy.get(key);
-				case DELETE:
-					storage_proxy.delete(key);
-					break;
+		if (is_stable && is_running) {
+			if (is_belong_me(hash(key.hashCode()))) {
+				switch (oper) {
+					case PUT:
+						storage_proxy.put(key, value);
+						break;
+					case APPEND:
+						storage_proxy.append(key, value);
+						break;
+					case GET:
+						return storage_proxy.get(key);
+					case DELETE:
+						storage_proxy.delete(key);
+						break;
 				}
-			}else {
+			} else {
 				int id = calculate(hash(key.hashCode()));
 				return send_to_other(table.get_node(id), key, value, oper);
 			}
-		}else if(!is_stable && is_running){
-			
-		}else {
-			Debug.debug("Warning: this server is not alived!!");
+		} else if(!is_stable && is_running) {
+			wait_stable();
+			exec(key, value, oper);
+		} else {
+			throw new IllegalArgumentException("Warning: this server is not alived!!");
 		}
 		return null;
 	}
@@ -213,7 +234,7 @@ public class NodeImpl implements INode, IRpcMethod{
 	}
 
 	/*
-	 *  send a joinChordRing rpc method request to another node
+	 *  send a joinChordRing rpc method request to a known node
 	 */
 	@Override
 	public void joinChordRing(NodeImpl node) {
@@ -226,6 +247,7 @@ public class NodeImpl implements INode, IRpcMethod{
 			e.printStackTrace();
 		}
 		Debug.debug("server " + this.get_hashcode() + " is joining ring succesfully");
+        this.is_running = true;
 	}
 
 	/*
@@ -271,6 +293,7 @@ public class NodeImpl implements INode, IRpcMethod{
 				table_list = handle_join_chord_ring(node);
 				is_stable = true;
 			}else {
+				wait_stable();
 				Debug.debug("Warning:A server want to join a unstable chord ring!");
 			}
 		}
@@ -310,7 +333,7 @@ public class NodeImpl implements INode, IRpcMethod{
 	
 	private void move_data(InetSocketAddress succ_addr) {
 		IRpcMethod service;
-		ArrayList<String> data = new ArrayList<String>();
+		ArrayList<String> data = new ArrayList<>();
 		try {
 			service = RpcFramework.refer(IRpcMethod.class, succ_addr.getAddress().getHostAddress(), succ_addr.getPort());
 			data = service.RPC_get_remotedatq();
@@ -318,19 +341,21 @@ public class NodeImpl implements INode, IRpcMethod{
 			e.printStackTrace();
 		}
 		for (int i = 0; i < data.size(); i+=2) {
-			exec(data.get(i), data.get(i+1), Operation.PUT);
+			exec(data.get(i), data.get(i + 1), Operation.PUT);
 		}
 	}
 	
 	private ArrayList<InetSocketAddress> handle_join_chord_ring(NodeImpl node) {
-		ArrayList<InetSocketAddress> table_list = new ArrayList<InetSocketAddress>();
+		ArrayList<InetSocketAddress> table_list;
 		InetSocketAddress succ_addr = RPC_get_successor(hash(node.hashCode()));
 		IRpcMethod service;
 		try {
 			service = RpcFramework.refer(IRpcMethod.class, succ_addr.getAddress().getHostAddress(), succ_addr.getPort());
-			predecessor = service.RPC_get_pred();
-			service.RPC_change_pred(address);
-		} catch (Exception e) {
+            InetSocketAddress predecessor = service.RPC_get_pred();
+			service.RPC_change_pred(node.address);
+            service = RpcFramework.refer(IRpcMethod.class, predecessor.getAddress().getHostAddress(), predecessor.getPort());
+            service.RPC_change_succ(node.address);
+        } catch (Exception e) {
 			e.printStackTrace();
 		}
 		// init finger table
@@ -474,7 +499,12 @@ public class NodeImpl implements INode, IRpcMethod{
 	public void RPC_change_pred(InetSocketAddress addr) {
 		predecessor = addr;
 	}
-	
+
+    @Override
+    public void RPC_change_succ(InetSocketAddress addr) {
+        table.replace(0, addr);
+    }
+
 	@Override
 	public InetSocketAddress RPC_get_predecessor(int hashcode) {
 		InetSocketAddress succ = RPC_get_successor(hashcode);

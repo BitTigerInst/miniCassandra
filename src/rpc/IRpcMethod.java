@@ -27,7 +27,9 @@ public interface IRpcMethod {
 	ArrayList<String> RPC_get_remotedatq();
 	
 	void RPC_change_pred(InetSocketAddress addr);
-	
+
+	void RPC_change_succ(InetSocketAddress addr);
+
 	/*
 	 *  rpc interface for join chord ring
 	 */
