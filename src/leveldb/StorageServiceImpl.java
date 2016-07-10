@@ -3,7 +3,6 @@ package leveldb;
 import static org.iq80.leveldb.impl.Iq80DBFactory.asString;
 import static org.iq80.leveldb.impl.Iq80DBFactory.bytes;
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
-
 import java.io.File;
 import java.io.IOException;
 import org.iq80.leveldb.*;
@@ -13,9 +12,8 @@ import util.Debug;
 public class StorageServiceImpl implements IStorageService{
 
 	private Options     options;
-	public  DB          db;
+	private DB          db;
 	private NodeImpl    node;
-	File                file;
 
 	public StorageServiceImpl(NodeImpl node, String name) throws IOException {
 		this.node = node;
@@ -23,6 +21,11 @@ public class StorageServiceImpl implements IStorageService{
 		options = new Options();
 		options.createIfMissing(true);
 		db = factory.open(file, options);
+	}
+
+	@Override
+	public DB get_db() {
+		return db;
 	}
 
 	@Override
@@ -36,7 +39,7 @@ public class StorageServiceImpl implements IStorageService{
 		String value = get(key);
 		if(value==null) {
 			put(key, content);
-		}else {
+		} else {
 			value = value + content;
 		}
 		Debug.debug("Node[" + node.get_hashcode() + "] APPEND Key:" + key + "Value:" + value);

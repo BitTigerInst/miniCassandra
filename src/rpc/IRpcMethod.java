@@ -1,5 +1,6 @@
 package rpc;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
@@ -24,7 +25,7 @@ public interface IRpcMethod {
 	
 	InetSocketAddress RPC_get_pred();
 	
-	ArrayList<String> RPC_get_remotedatq();
+	ArrayList<String> RPC_get_remotedatq() throws IOException;
 	
 	void RPC_change_pred(InetSocketAddress addr);
 

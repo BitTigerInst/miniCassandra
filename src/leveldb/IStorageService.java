@@ -1,13 +1,17 @@
 package leveldb;
 
+import org.iq80.leveldb.DB;
+
 public interface IStorageService {
-	public void put(String key, String value);
+	void put(String key, String value);
 	
-	public void append(String key, String value);
+	void append(String key, String value);
+
+	String get(String key);
 	
-	public String get(String key);
+	void delete(String key);
 	
-	public void delete(String key);
-	
-	public void destroy();
+	void destroy();
+
+	DB get_db();
 }
