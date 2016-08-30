@@ -8,11 +8,11 @@ import dht.node.NodeImpl.Operation;
 
 public interface INode {
 
-	public InetAddress get_addr();
+	public InetAddress getAddr();
 
-	public int get_hashcode();
+	public int getHashcode();
 
-	public int get_port();
+	public int getPort();
 
 	public String exec(String key, String value, Operation oper);
 

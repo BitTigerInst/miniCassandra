@@ -1,53 +1,56 @@
 package rpc;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-
+import dht.chord.FingerTable;
 import dht.node.NodeImpl;
 import dht.node.NodeImpl.Operation;
 import dht.node.NodeImpl.Type;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
 
 /**
  * Transport factory for establishing gRPC connections from clients to a remote server.
  */
 public interface IRpcMethod {
 
-	void RPC_UpdateServerFingerTable(Type type, InetSocketAddress addr,int hashcode, int i);
+	void rpcUpdateServerFingerTable(Type type, InetSocketAddress addr, int hashcode, int i);
 
 	// ArrayList<InetSocketAddress> RPC_Succ_update_finger_table(Type type, int hashcode);
 	
-	InetSocketAddress RPC_get_successor(int hashcode);
+	InetSocketAddress rpcGetSuccessor(int hashcode);
 	
-	InetSocketAddress RPC_get_predecessor(int hashcode);
+	InetSocketAddress rpcGetPredecessor(int hashcode);
 	
-	InetSocketAddress RPC_get_succ();
+	InetSocketAddress rpcGetSucc();
 	
-	InetSocketAddress RPC_get_pred();
-	
-	ArrayList<String> RPC_get_remotedatq() throws IOException;
-	
-	void RPC_change_pred(InetSocketAddress addr);
+	InetSocketAddress rpcGetPred();
 
-	void RPC_change_succ(InetSocketAddress addr);
+	FingerTable rpcGetFingerTable();
+	
+	ArrayList<String> rpcGetRemotedatq() throws IOException;
+	
+	void rpcChangePred(InetSocketAddress addr);
+
+	void rpcChangeSucc(InetSocketAddress addr);
 
 	/*
 	 *  rpc interface for join chord ring
 	 */
-	ArrayList<InetSocketAddress> RPC_JoinChordRing(NodeImpl node);
+	ArrayList<InetSocketAddress> rpcJoinChordRing(NodeImpl node) throws Exception;
 
 	/*
 	 *  rpc interface for leave chord ring
 	 */	
-	void RPC_LeaveChordRing();
+	void rpcLeaveChordRing();
 
 	/*
 	 *  rpc interface for Operation Put, Append, Delete
 	 */
-	void RPC_Call_PAD(String key, String value, Operation oper);
+	void rpcCallPad(String key, String value, Operation oper);
 
 	/*
 	 *  rpc interface for Operation Get
 	 */	
-	String  RPC_Call_GET(String key);
+	String rpcCallGet(String key);
 }

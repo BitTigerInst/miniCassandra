@@ -41,7 +41,7 @@ public class RpcFramework {
 	}
 
 	private boolean running;
-	static ConcurrentHashMap<RPC_Entry, Object> maps = new ConcurrentHashMap<>();
+	static ConcurrentHashMap<RPC_Entry, Object> maps = new ConcurrentHashMap<RPC_Entry, Object>();
 
 	public RpcFramework(boolean running) {
 		this.running = running;
@@ -61,6 +61,7 @@ public class RpcFramework {
             throw new IllegalArgumentException("Invalid port " + port);
         Debug.debug("Export service " + service.getClass().getName() + " on port " + port);
         ServerSocket server = new ServerSocket(port);
+		Short a;
         while(running) {
             try {
             	//a blocking method
@@ -69,7 +70,7 @@ public class RpcFramework {
 	                new Thread(new Runnable() {
 	                    @Override
 	                    public void run() {
-	                        try {
+	               	         try {
 	                            try {
 	                                ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
 	                                try {

@@ -1,25 +1,34 @@
 import client.Client;
 import dht.chord.*;
 import java.util.ArrayList;
+import java.util.List;
+
 import dht.node.NodeImpl.Operation;
 
 public class DHT_Test {
 
+	public static void init(ArrayList<String> ipList, ArrayList<Integer> portList) {
+		ipList.add("127.0.0.1");
+		ipList.add("127.0.0.1");
+		ipList.add("127.0.0.1");
+		portList.add(9245);
+		portList.add(9246);
+		portList.add(9247);
+	}
 	public static void main(String[] args) {
-		
 		//1.init cluster
-		int SERVER_INT = 4;
+		int SERVERS = 3;
 		int CLIENT_ID = 1;
 		int RING_LEN = 10;
-		ArrayList<String> ip_list = new ArrayList<>();
-		ArrayList<Integer> port_list = new ArrayList<>();
-		
-		
+		ArrayList<String> ipList = new ArrayList<String>();
+		ArrayList<Integer> portList = new ArrayList<Integer>();
+		init(ipList, portList);
+
 		//2.create a cluster
-		Chord cluster = Chord.CreateCluster(SERVER_INT, RING_LEN, ip_list, port_list);
+		Chord.CreateCluster(SERVERS, RING_LEN, ipList, portList);
 
 		//3.create a client
-		Client client = Client.CreateClient(CLIENT_ID, ip_list, port_list);
+		Client client = Client.CreateClient(CLIENT_ID, ipList, portList);
 		
 		//4.do some operation and verify it
 		client.exec("Tom", "old:", Operation.PUT);
@@ -41,5 +50,4 @@ public class DHT_Test {
 		Chord.DestroyCluster();
 		System.out.println("passed basic operation test");
 	}
-	
 }

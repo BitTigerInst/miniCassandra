@@ -13,14 +13,14 @@ public class FingerTable {
 	public FingerTable(NodeImpl node, int id) {
 		this.node = node;
 		this.id = id;
-		starts = new ArrayList<>();
+		starts = new ArrayList<InetSocketAddress>();
 	}
 	
-	public void set_finger_table_list(ArrayList<InetSocketAddress> starts) {
+	public void setFingerTableList(ArrayList<InetSocketAddress> starts) {
 		this.starts = starts;
 	}
 
-	public int get_list_size() {
+	public int getListSize() {
 		return starts.size();
 	}
 
@@ -33,12 +33,12 @@ public class FingerTable {
 		}
 	}
 	
-	//get a node form finger table accroding to the index
-	public InetSocketAddress get_node(int index) {
+	//get a node form finger table according to the index
+	public InetSocketAddress getNode(int index) {
 		return starts.get(index);
 	}
 
-	protected int get_id() {
+	protected int getId() {
 		return id;
 	}
 }

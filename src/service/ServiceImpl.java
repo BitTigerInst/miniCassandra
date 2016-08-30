@@ -17,28 +17,28 @@ public class ServiceImpl implements IService{
 	//but GET need got a String type return
 	@Override
 	public void put(String key, String value) {
-		IRpc.RPC_Call_PAD(key, value, Operation.PUT);
+		IRpc.rpcCallPad(key, value, Operation.PUT);
 		Debug.debug("Client[" + client_id +"] send put key:" + key 
 				    + " value:" + value + " operation failed!");
 	}
 
 	@Override
 	public String get(String key) {
-		String result = IRpc.RPC_Call_GET(key);
+		String result = IRpc.rpcCallGet(key);
 		Debug.debug("Client[" + client_id +"] send get result:" + result);
 		return result;
 	}
 
 	@Override
 	public void append(String key, String value) {
-		IRpc.RPC_Call_PAD(key, value, Operation.APPEND);
+		IRpc.rpcCallPad(key, value, Operation.APPEND);
 		Debug.debug("Client[" + client_id +"] send append key:" + key 
 					+ " value:" + value + " operation failed!");
 	}
 
 	@Override
 	public void delete(String key, String value) {
-		IRpc.RPC_Call_PAD(key, value, Operation.DELETE);
+		IRpc.rpcCallPad(key, value, Operation.DELETE);
 		Debug.debug("Client[" + client_id +"] send delete key:" + key 
 					+ " value:" + value + " operation failed!");
 	}

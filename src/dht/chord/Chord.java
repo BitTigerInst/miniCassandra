@@ -6,7 +6,7 @@ import dht.node.INode;
 import dht.node.NodeImpl;
 
 public class Chord {
-	private static ArrayList<INode> NodeList = new ArrayList<>();
+	private static ArrayList<INode> NodeList = new ArrayList<INode>();
 	private static Chord chord = null;
 	private int length;
 	//private int RING_LEN;
@@ -14,50 +14,42 @@ public class Chord {
 	//initiate the finger table for this cluster
 	//according to the ip_list and port_list
 	public static ArrayList<FingerTable>  init_fingertable(ArrayList<String> ip_list, ArrayList<Integer>port_list) {
-		ArrayList<FingerTable> finger_table = new ArrayList<>();
+		ArrayList<FingerTable> finger_table = new ArrayList<FingerTable>();
 		//TODO
 		
 		
 		return finger_table;
 	}
 
-	public ArrayList<INode> get_node_list() {
+	public ArrayList<INode> getNodeList() {
 		return NodeList;
 	}
 	
-	public boolean addnode(String ip, Integer port) {
+	public boolean addNode(String ip, Integer port) {
 		
 		return true;
 	}
 
-	public static Chord CreateCluster(int num, int ring_len, ArrayList<String> ip_list, ArrayList<Integer>port_list) {
-		if(chord!=null) {
+	public static Chord CreateCluster(int num, int ringLen, ArrayList<String> ipList, ArrayList<Integer>portList) {
+		if (chord != null) {
 			return chord;
 		}
 
-		if(ip_list.size()!=port_list.size() || ip_list.size()!=num) {
+		if (ipList.size() != portList.size() || ipList.size() != num) {
 			throw new IllegalArgumentException("Cluster create failed, IP list or Port list size error");
 		}
 
-		/*
-		if(table_list.size()!=ip_list.size()) {
-			throw new IllegalArgumentException("Cluster create failed, FingerTable list size error");
-		}
-		*/
-
-		int cnt = 0;
-		while(cnt < num) {
-			String addr = ip_list.get(cnt);
-			int port = port_list.get(cnt);
+		for (int cnt = 0;cnt < ipList.size();++cnt) {
+			String addr = ipList.get(cnt);
+			int port = portList.get(cnt);
 			//FingerTable table = table_list.get(cnt);
 			try {
-				NodeList.add(NodeImpl.createNode(addr, port, ring_len));
+				NodeList.add(NodeImpl.createNode(addr, port, ringLen));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			++cnt;
 		}
-		chord = new Chord(ring_len);
+		chord = new Chord(ringLen);
 		return chord;
 	}
 
@@ -69,7 +61,6 @@ public class Chord {
 	
 	private Chord(int n) {
 		this.length = n;
-		Debug.debug("Creating a cluster RING_LEN:" + length + 
-						", contain " + NodeList + "nodes.");
+		Debug.debug("Creating a cluster RING_LEN:" + length + ", contain " + NodeList + "nodes.");
 	}
 }
