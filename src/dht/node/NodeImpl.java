@@ -249,7 +249,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
                 table.setFingerTableList(fingerTable);
             } else {
                 //first node in cluster
-                table.setFingerTableList(new ArrayList<>());
+                table.setFingerTableList(new ArrayList<InetSocketAddress>());
             }
 		} catch (Exception e) {
 			e.printStackTrace();
