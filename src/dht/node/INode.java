@@ -1,24 +1,25 @@
 package dht.node;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import dht.chord.FingerTable;
 import dht.node.NodeImpl.Operation;
 
-public interface INode {
+public interface INode extends Serializable{
 
-	public InetAddress getAddr();
+	InetAddress getAddr();
 
-	public int getHashcode();
+	int getHashcode();
 
-	public int getPort();
+	int getPort();
 
-	public String exec(String key, String value, Operation oper);
+	String exec(String key, String value, Operation oper);
 
-	public void joinChordRing(NodeImpl node);
+	void joinChordRing(NodeImpl node);
 
-	public void leaveChordRing();
+	void leaveChordRing();
 
-	public void destroy();
+	void destroy();
 }

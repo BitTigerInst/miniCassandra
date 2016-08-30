@@ -13,5 +13,5 @@ public interface IStorageService {
 	
 	void destroy();
 
-	DB get_db();
+	DB getDb();
 }

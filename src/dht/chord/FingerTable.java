@@ -6,14 +6,9 @@ import java.util.ArrayList;
 import dht.node.NodeImpl;
 
 public class FingerTable {
-	private NodeImpl   node;
-	private int        id;
 	private ArrayList<InetSocketAddress> starts;
 
-	public FingerTable(NodeImpl node, int id) {
-		this.node = node;
-		this.id = id;
-		starts = new ArrayList<InetSocketAddress>();
+	public FingerTable() {
 	}
 	
 	public void setFingerTableList(ArrayList<InetSocketAddress> starts) {
@@ -36,9 +31,5 @@ public class FingerTable {
 	//get a node form finger table according to the index
 	public InetSocketAddress getNode(int index) {
 		return starts.get(index);
-	}
-
-	protected int getId() {
-		return id;
 	}
 }

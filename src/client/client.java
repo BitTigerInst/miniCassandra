@@ -9,54 +9,54 @@ import dht.node.NodeImpl.Operation;
 
 public class Client {
 	IService 			  service;
-	int                   client_id;
-	ArrayList<String>     ip_list;
-	ArrayList<Integer>    port_list;
-	IRpcMethod            rpc_method_interface;
+	int                   clientId;
+	ArrayList<String>     ipList;
+	ArrayList<Integer>    portList;
+	IRpcMethod            rpcMethodInterface;
 
-	private Client(int client_id, ArrayList<String> ip_list, ArrayList<Integer> port_list) {
-		this.client_id = client_id;
-		this.ip_list = ip_list;
-		this.port_list = port_list;
+	private Client(int clientId, ArrayList<String> ipList, ArrayList<Integer> portList) {
+		this.clientId = clientId;
+		this.ipList = ipList;
+		this.portList = portList;
 		//select a server from server
 		//list randomly and connect it.
-		int idx = get_random_idx(ip_list.size());
+		int idx = getRandomIdx(ipList.size());
 		try {
-			rpc_method_interface = RpcFramework.refer(IRpcMethod.class, ip_list.get(idx), port_list.get(idx));
-			System.out.println("Client[" + client_id +"] connect server ip:" 
-							+ ip_list.get(idx) + " port:" + port_list.get(idx));
+			rpcMethodInterface = RpcFramework.refer(IRpcMethod.class, ipList.get(idx), portList.get(idx));
+			System.out.println("Client[" + clientId +"] connect server ip:"
+							+ ipList.get(idx) + " port:" + portList.get(idx));
 		} catch (Exception e) {
 			Debug.debug("RPC framework refer error!");
 			e.printStackTrace();
 		}
-		this.service = new ServiceImpl(client_id, rpc_method_interface);
-		System.out.println("Create a Client client_id:" + client_id);
+		this.service = new ServiceImpl(clientId, rpcMethodInterface);
+		System.out.println("Create a Client clientId:" + clientId);
 	}
 
 	public String exec(String key, String value, Operation oper) {
-		switch(oper) {
-		case PUT:
-			service.put(key, value);
-			break;
-		case APPEND:
-			service.append(key, value);
-			break;
-		case DELETE:
-			service.delete(key, value);
-			break;
-		case GET:
-			return service.get(key);
+		switch (oper) {
+			case PUT:
+				service.put(key, value);
+				break;
+			case APPEND:
+				service.append(key, value);
+				break;
+			case DELETE:
+				service.delete(key, value);
+				break;
+			case GET:
+				return service.get(key);
 		}
 		return null;
 	}
 
 	//generate a random number between 0~num-1
-	public int get_random_idx(int num) {
-		return (int)(Math.random()*num);
+	public int getRandomIdx(int num) {
+		return (int)(Math.random() * num);
 	}
 
-	public static Client CreateClient(int client_id, ArrayList<String> ip_list, ArrayList<Integer> port_list) {
-		return new Client(client_id, ip_list, port_list);
+	public static Client CreateClient(int clientId, ArrayList<String> ipList, ArrayList<Integer> portList) {
+		return new Client(clientId, ipList, portList);
 	}
 
 	public static void main(String[] args) {

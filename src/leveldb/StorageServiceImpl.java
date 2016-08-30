@@ -13,19 +13,20 @@ public class StorageServiceImpl implements IStorageService{
 	private Options     options;
 	private DB          db;
 	private NodeImpl    node;
+    private File        file;
 
 	public StorageServiceImpl(NodeImpl node, String name) throws IOException {
 		this.node = node;
-		File file = new File(name);
+		file = new File(name);
 		if (!file.exists()) {
-			file.createNewFile();
+			file.mkdir();
 		}
 		options = new Options();
 		options.createIfMissing(true);
 		db = factory.open(file, options);
 	}
 
-	public DB get_db() {
+	public DB getDb() {
 		return db;
 	}
 
@@ -36,7 +37,7 @@ public class StorageServiceImpl implements IStorageService{
 
 	public void append(String key, String content) {
 		String value = get(key);
-		if(value==null) {
+		if(value == null) {
 			put(key, content);
 		} else {
 			value = value + content;
@@ -57,6 +58,7 @@ public class StorageServiceImpl implements IStorageService{
 
 	public void destroy() {
 		try {
+            file.delete();
 			db.close();
 		} catch (IOException e) {
 			e.printStackTrace();

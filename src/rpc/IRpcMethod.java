@@ -6,13 +6,14 @@ import dht.node.NodeImpl.Operation;
 import dht.node.NodeImpl.Type;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
 /**
  * Transport factory for establishing gRPC connections from clients to a remote server.
  */
-public interface IRpcMethod {
+public interface IRpcMethod extends Serializable {
 
 	void rpcUpdateServerFingerTable(Type type, InetSocketAddress addr, int hashcode, int i);
 

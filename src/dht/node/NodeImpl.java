@@ -8,13 +8,13 @@ import org.iq80.leveldb.impl.Iq80DBFactory;
 import rpc.IRpcMethod;
 import rpc.RpcFramework;
 import util.Debug;
-
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
-public class NodeImpl implements INode, IRpcMethod{
+public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable {
 	private int               RING_LEN;
     private int               bits;
 	private InetSocketAddress address;
@@ -35,35 +35,44 @@ public class NodeImpl implements INode, IRpcMethod{
 		this.RING_LEN = 1 << bits;
 		this.address = address;
 		this.hashcode = hashing(this.hashCode());
+        table = new FingerTable();
 		Itrans = this;
 		storageProxy = new StorageServiceImpl(this, generateFileName());
 		rpcFramework = new RpcFramework(true);
-		rpcFramework.export(Itrans, address.getPort());
 		Debug.debug("Create Server Address:" + address.getHostName() + ", port:" + address.getPort());
 	}
 	
-	public enum Operation {
+	public enum Operation implements Serializable {
 		PUT,
 		APPEND,
 		GET,
 		DELETE,
 	}
 
-	public enum Type {
+	public enum Type implements Serializable {
 		JOIN,
 		LEAVE,
 	}
+
+    @Override
+    public void run() {
+        try {
+            rpcFramework.export(Itrans, address.getPort());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 	
 	private String generateFileName() {
-		return getAddr().toString() + "_" + fileCount++;
+		return getAddr().toString().substring(1) + "_" + fileCount++;
 	}
 
-	public static INode createNode(String ip, int port, int bits) throws Exception {
+	public static NodeImpl createNode(String ip, int port, int bits) throws Exception {
 		InetSocketAddress address = new InetSocketAddress(ip, port);
 		return new NodeImpl(address, bits);
 	}
 
-	public void destroy() {
+	public void destroyNode() {
 		this.storageProxy.destroy();
 		this.rpcFramework.destroy();
 	}
@@ -93,7 +102,7 @@ public class NodeImpl implements INode, IRpcMethod{
 		}
 	}
 	
-	/*
+	/**
 	 * judge if this operation own to current server
 	 */
 	public boolean isBelongMe(int hashcode) {
@@ -101,7 +110,7 @@ public class NodeImpl implements INode, IRpcMethod{
 		return inRange(hashcode, predeHash, this.getHashcode());
 	}
 
-	/*
+	/**
 	 * wait the cluster be stable
 	 */
 	public void waitStable() {
@@ -119,7 +128,7 @@ public class NodeImpl implements INode, IRpcMethod{
 		}
 	}
 
-	/* 
+	/**
 	 * Firstly calculating the owner for this
 	 * operation according to the hashcode of key.
 	 * Secondly executing the operation.
@@ -153,35 +162,34 @@ public class NodeImpl implements INode, IRpcMethod{
 		return null;
 	}
 
-	/*
+	/**
 	 * calculate the correct or the most close server id for this hashcode
 	 */
 	private int calculate(int hashcode) {
-		// table size is fixed? log_2^(ring_len)
-		int list_size = table.getListSize();
-		InetSocketAddress first_node = table.getNode(0);
-		InetSocketAddress last_node = table.getNode(table.getListSize() - 1);
-		int first_node_hashcode = hashing(first_node.getAddress().getHostAddress().hashCode());
-		if(list_size==1 || hashcode==first_node_hashcode) {
+		int listSize = table.getListSize();
+		InetSocketAddress firstNode = table.getNode(0);
+		InetSocketAddress lastNode = table.getNode(table.getListSize() - 1);
+		int firstNodeHashcode = hashing(firstNode.getAddress().getHostAddress().hashCode());
+		if(listSize == 1 || hashcode == firstNodeHashcode) {
 			return 0;
 		}
-		int last_node_hashcode = hashing(last_node.getAddress().getHostAddress().hashCode());
-		if(hashcode>=last_node_hashcode || (hashcode>=0 && hashcode<first_node_hashcode)) {
-			return list_size - 1;
+		int lastNodeHashcode = hashing(lastNode.getAddress().getHostAddress().hashCode());
+		if(hashcode >= lastNodeHashcode || (hashcode >= 0 && hashcode < firstNodeHashcode)) {
+			return listSize - 1;
 		}
-		for(int idx = 1;idx<=list_size-2;++idx) {
+		for(int idx = 1; idx <= listSize - 2; idx++) {
 			InetSocketAddress node = table.getNode(idx);
-			InetSocketAddress node_succ = table.getNode(idx + 1);
-			int node_hashcode = hashing(node.getAddress().getHostAddress().hashCode());
-			int node_succ_hashcode = hashing(node_succ.getAddress().getHostAddress().hashCode());
-			if(hashcode>=node_hashcode && hashcode<node_succ_hashcode) {
+			InetSocketAddress nodeSucc = table.getNode(idx + 1);
+			int nodeHashcode = hashing(node.getAddress().getHostAddress().hashCode());
+			int nodeSuccHashcode = hashing(nodeSucc.getAddress().getHostAddress().hashCode());
+			if(hashcode >= nodeHashcode && hashcode < nodeSuccHashcode) {
 				return idx;
 			}
 		}
 		return -1;
 	}
 
-	/*
+	/**
 	 * send the operation to appropriate server
 	 * by searching finger table
 	 */
@@ -201,9 +209,9 @@ public class NodeImpl implements INode, IRpcMethod{
 	}
 
 	private InetSocketAddress getSuccessor() {
-		if(table.getListSize()>0) {
+		if(table.getListSize() > 0) {
 			return table.getNode(0);
-		}else {
+		} else {
 			return null;
 		}
 	}
@@ -230,15 +238,19 @@ public class NodeImpl implements INode, IRpcMethod{
 		return null;
 	}
 
-	/*
+	/**
 	 *  send a joinChordRing rpc method request to a known node
 	 */
 	public void joinChordRing(NodeImpl node) {
-		IRpcMethod service;
 		try {
-			service = RpcFramework.refer(IRpcMethod.class, node.getAddr().getHostAddress(), node.getPort());
-			ArrayList<InetSocketAddress> table_list = service.rpcJoinChordRing(this);
-			table.setFingerTableList(table_list);
+            if (node != null) {
+                IRpcMethod service = RpcFramework.refer(IRpcMethod.class, node.getAddr().getHostAddress(), node.getPort());
+                ArrayList<InetSocketAddress> fingerTable = service.rpcJoinChordRing(this);
+                table.setFingerTableList(fingerTable);
+            } else {
+                //first node in cluster
+                table.setFingerTableList(new ArrayList<>());
+            }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -246,7 +258,7 @@ public class NodeImpl implements INode, IRpcMethod{
         this.isRunning = true;
 	}
 
-	/*
+	/**
 	 *  send a leaveChordRing rpc method request to another node
 	 */
 	public void leaveChordRing() {
@@ -278,23 +290,23 @@ public class NodeImpl implements INode, IRpcMethod{
 	}
 
 
-    /*
+    /**
      * when a new node want to join the cluster, it should use this method
      * call a known cluster node.
      */
 	public ArrayList<InetSocketAddress> rpcJoinChordRing(NodeImpl node) throws Exception {
-		ArrayList<InetSocketAddress> table_list = null;
+		ArrayList<InetSocketAddress> tableList = null;
 		if(isRunning) {
 			if(isStable) {
 				isStable = false;
-				table_list = handleJoinChordRing(node);
+				tableList = handleJoinChordRing(node);
 				isStable = true;
 			} else {
 				waitStable();
 				Debug.debug("Warning:A server want to join a unstable chord ring!");
 			}
 		}
-		return table_list;
+		return tableList;
 	}
 	
 	private ArrayList<InetSocketAddress> initFingerTable(int hashCode) throws Exception {
@@ -310,9 +322,8 @@ public class NodeImpl implements INode, IRpcMethod{
 	}
 	
 	private void updateOthers(Type type) {
-		int add = 1;
-		for (int i = 0; i < bits; i++, add *= 2) {
-			InetSocketAddress p = rpcGetPredecessor(hashing(hashcode - add));//mod Size
+		for (int i = 0, j = 1; i < bits; i++, j *= 2) {
+			InetSocketAddress p = rpcGetPredecessor(hashing(hashcode - j));//mod Size
 			IRpcMethod service;
 			try {
 				service = RpcFramework.refer(IRpcMethod.class, p.getAddress().getHostAddress(), p.getPort());
@@ -323,12 +334,11 @@ public class NodeImpl implements INode, IRpcMethod{
 		}
 	}
 	
-	
-	private void moveData(InetSocketAddress succ_addr) {
+	private void moveData(InetSocketAddress succAddr) {
 		IRpcMethod service;
 		ArrayList<String> data = new ArrayList<String>();
 		try {
-			service = RpcFramework.refer(IRpcMethod.class, succ_addr.getAddress().getHostAddress(), succ_addr.getPort());
+			service = RpcFramework.refer(IRpcMethod.class, succAddr.getAddress().getHostAddress(), succAddr.getPort());
 			data = service.rpcGetRemotedatq();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -361,7 +371,7 @@ public class NodeImpl implements INode, IRpcMethod{
 	}
 
 	public ArrayList<String> rpcGetRemotedatq() throws IOException {
-		DBIterator iterator = storageProxy.get_db().iterator();
+		DBIterator iterator = storageProxy.getDb().iterator();
 		ArrayList<String> ret = new ArrayList<String>();
 		try {
 		  for(iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
@@ -386,8 +396,8 @@ public class NodeImpl implements INode, IRpcMethod{
 				isStable = false;
 				handleLeaveChordRing();
 				isStable = true;
-			}else {
-				Debug.debug("Warning:A server want to join a unstable chord ring!");
+			} else {
+				Debug.debug("Warning:a server want to join a unstable chord ring!");
 			}
 		}
 	}
@@ -401,76 +411,29 @@ public class NodeImpl implements INode, IRpcMethod{
 		// relocate_data();
 	}
 
-	public void rpcUpdateServerFingerTable(Type type, InetSocketAddress addr, int node_hashcode, int i) {
+	public void rpcUpdateServerFingerTable(Type type, InetSocketAddress addr, int nodeHashcode, int i) {
 		// the boundary is not clear
-		if (inRange(node_hashcode, this.hashcode, hashing(table.getNode(i).hashCode()))) {
+		if (inRange(nodeHashcode, this.hashcode, hashing(table.getNode(i).hashCode()))) {
 			switch (type) {
 				case JOIN:
 					table.replace(i, addr);
 					break;
 				case LEAVE:
 					int ithID = this.hashcode + (int) Math.pow(2, i);
-					InetSocketAddress new_addr = rpcGetSuccessor(ithID);
-					table.replace(i, new_addr);
+					InetSocketAddress newAddr = rpcGetSuccessor(ithID);
+					table.replace(i, newAddr);
 					break;
 			}
 			InetSocketAddress next = table.getNode(0);
 			IRpcMethod service;
 			try {
 				service = RpcFramework.refer(IRpcMethod.class, next.getAddress().getHostAddress(), next.getPort());
-				service.rpcUpdateServerFingerTable(type, addr, node_hashcode, i);
+				service.rpcUpdateServerFingerTable(type, addr, nodeHashcode, i);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
-
-	public ArrayList<InetSocketAddress> createFingerTable() {
-		ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>();
-		int table_size = table.getListSize();
-		for (int i=0;i<table_size;++i) {
-			InetSocketAddress addr = table.getNode(i);
-			IRpcMethod service;
-			try {
-				service = RpcFramework.refer(IRpcMethod.class, addr.getAddress().getHostAddress(), addr.getPort());
-				InetSocketAddress succ = service.rpcGetSucc();
-				if (!list.contains(succ)) {
-					list.add(succ);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		return list;
-	}
-/*
-	public void update_all_related_server_ftable(Type type) {
-		switch(type) {
-		case JOIN:
-			
-			break;
-		case LEAVE:
-			
-			break;
-		}
-	}
-
-	@Override
-	public ArrayList<InetSocketAddress> RPC_Succ_update_finger_table(Type type, int hashcode) {
-		switch(type) {
-		case JOIN:
-			//1.update the finger table of all related server
-			update_all_related_server_ftable(type);
-			//2.create a new Finger table for new node
-			return createFingerTable();
-		case LEAVE:
-			//update the finger table of all related server
-			update_all_related_server_ftable(type);
-			break;
-		}
-		return null;
-	}
-	*/
 
 	public InetSocketAddress rpcGetSucc() {
 		return getSuccessor();

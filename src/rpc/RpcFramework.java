@@ -12,12 +12,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import util.Check;
 import util.Debug;
 
-class RPC_Entry{
+class rpcEntry {
 	Class<?> interfaceClass;
 	String host;
 	int port;
 
-	public RPC_Entry(Class<?> interfaceClass, String host, int port) {
+	public rpcEntry(Class<?> interfaceClass, String host, int port) {
 		this.interfaceClass = interfaceClass;
 		this.host = host;
 		this.port = port;
@@ -30,9 +30,9 @@ class RPC_Entry{
  */
 public class RpcFramework {
 	
-	public static <T> T is_contain(Class<T> interfaceClass, final String host, final int port) {
-		for(Entry<RPC_Entry, Object> e: maps.entrySet()) {
-			RPC_Entry entry = e.getKey();
+	public static <T> T isContain(Class<T> interfaceClass, final String host, final int port) {
+		for(Entry<rpcEntry, Object> e: maps.entrySet()) {
+			rpcEntry entry = e.getKey();
 			if(entry.interfaceClass.toString().equals(interfaceClass.toString())  && entry.host.equals(host) && entry.port==port) {
 				return (T) e.getValue();
 			}
@@ -41,7 +41,7 @@ public class RpcFramework {
 	}
 
 	private boolean running;
-	static ConcurrentHashMap<RPC_Entry, Object> maps = new ConcurrentHashMap<RPC_Entry, Object>();
+	static ConcurrentHashMap<rpcEntry, Object> maps = new ConcurrentHashMap<rpcEntry, Object>();
 
 	public RpcFramework(boolean running) {
 		this.running = running;
@@ -61,43 +61,39 @@ public class RpcFramework {
             throw new IllegalArgumentException("Invalid port " + port);
         Debug.debug("Export service " + service.getClass().getName() + " on port " + port);
         ServerSocket server = new ServerSocket(port);
-		Short a;
         while(running) {
             try {
             	//a blocking method
                 final Socket socket = server.accept();
                 if(running) {
-	                new Thread(new Runnable() {
-	                    @Override
-	                    public void run() {
-	               	         try {
-	                            try {
-	                                ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-	                                try {
-	                                    String methodName = input.readUTF();
-	                                    Class<?>[] parameterTypes = (Class<?>[])input.readObject();
-	                                    Object[] arguments = (Object[])input.readObject();
-	                                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-	                                    try {
-	                                        Method method = service.getClass().getMethod(methodName, parameterTypes);
-	                                        Object result = method.invoke(service, arguments);
-	                                        output.writeObject(result);
-	                                    } catch (Throwable t) {
-	                                        output.writeObject(t);
-	                                    } finally {
-	                                        output.close();
-	                                    }
-	                                } finally {
-	                                    input.close();
-	                                }
-	                            } finally {
-	                                socket.close();
-	                            }
-	                        } catch (Exception e) {
-	                            e.printStackTrace();
-	                        }
-	                    }
-	                }).start();
+	                new Thread(() -> {
+                            try {
+                            try {
+                                ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+                                try {
+                                    String methodName = input.readUTF();
+                                    Class<?>[] parameterTypes = (Class<?>[])input.readObject();
+                                    Object[] arguments = (Object[])input.readObject();
+                                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+                                    try {
+                                        Method method = service.getClass().getMethod(methodName, parameterTypes);
+                                        Object result = method.invoke(service, arguments);
+                                        output.writeObject(result);
+                                    } catch (Throwable t) {
+                                        output.writeObject(t);
+                                    } finally {
+                                        output.close();
+                                    }
+                                } finally {
+                                    input.close();
+                                }
+                            } finally {
+                                socket.close();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -117,15 +113,15 @@ public class RpcFramework {
      */
     @SuppressWarnings("unchecked")
     public static <T> T refer(final Class<T> interfaceClass, final String host, final int port) throws Exception {
-        Check.check_null(interfaceClass, "null interface class");
-        Check.check_bool(interfaceClass.isInterface(), "invalid interfaceClass");
-        Check.check_null(host, "invalid host");
-        Check.check_bool(host.length()!=0, "invalide host length");
-        Check.check_bool(port>0, "invalid port");
-        Check.check_bool(port<=65535, "invalid port");
+        Check.checkNull(interfaceClass, "null interface class");
+        Check.checkBool(interfaceClass.isInterface(), "invalid interfaceClass");
+        Check.checkNull(host, "invalid host");
+        Check.checkBool(host.length()!=0, "invalide host length");
+        Check.checkBool(port>0, "invalid port");
+        Check.checkBool(port<=65535, "invalid port");
 
         synchronized(maps) {
-	        T result = is_contain(interfaceClass, host, port);
+	        T result = isContain(interfaceClass, host, port);
 	        if(result==null) {
 	        	result = (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] {interfaceClass}, new InvocationHandler() {
 	                public Object invoke(Object proxy, Method method, Object[] arguments) throws Throwable {
@@ -154,8 +150,8 @@ public class RpcFramework {
 	                    }
 	                }
 	            });
-	        	RPC_Entry new_rpc_entry = new RPC_Entry(interfaceClass, host, port);
-	        	maps.put(new_rpc_entry, result);
+	        	rpcEntry rpcEntry = new rpcEntry(interfaceClass, host, port);
+	        	maps.put(rpcEntry, result);
 	            Debug.debug("Create remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
 	        }
 	        else {
