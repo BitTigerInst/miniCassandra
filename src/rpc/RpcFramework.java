@@ -58,7 +58,7 @@ public class RpcFramework implements Serializable{
      */
     public void export(final Object service, int port) throws Exception {
         if (service == null)
-            throw new IllegalArgumentException("service instance == null");
+            throw new IllegalArgumentException("service instance is null");
         if (port <= 0 || port > 65535)
             throw new IllegalArgumentException("Invalid port " + port);
         logger.debug("Export service " + service.getClass().getName() + " on port " + port);
@@ -70,28 +70,28 @@ public class RpcFramework implements Serializable{
                 if(running) {
 	                new Thread(() -> {
                             try {
-                            try {
-                                ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-                                try {
-                                    String methodName = input.readUTF();
-                                    Class<?>[] parameterTypes = (Class<?>[])input.readObject();
-                                    Object[] arguments = (Object[])input.readObject();
-                                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-                                    try {
-                                        Method method = service.getClass().getMethod(methodName, parameterTypes);
-                                        Object result = method.invoke(service, arguments);
-                                        output.writeObject(result);
-                                    } catch (Throwable t) {
-                                        output.writeObject(t);
-                                    } finally {
-                                        output.close();
-                                    }
-                                } finally {
-                                    input.close();
-                                }
-                            } finally {
-                                socket.close();
-                            }
+								try {
+									ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+									try {
+										String methodName = input.readUTF();
+										Class<?>[] parameterTypes = (Class<?>[])input.readObject();
+										Object[] arguments = (Object[])input.readObject();
+										ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+										try {
+											Method method = service.getClass().getMethod(methodName, parameterTypes);
+											Object result = method.invoke(service, arguments);
+											output.writeObject(result);
+										} catch (Throwable t) {
+											output.writeObject(t);
+										} finally {
+											output.close();
+										}
+									} finally {
+										input.close();
+									}
+								} finally {
+									socket.close();
+								}
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -118,9 +118,9 @@ public class RpcFramework implements Serializable{
         Check.checkNull(interfaceClass, "null interface class");
         Check.checkBool(interfaceClass.isInterface(), "invalid interfaceClass");
         Check.checkNull(host, "invalid host");
-        Check.checkBool(host.length()!=0, "invalide host length");
-        Check.checkBool(port>0, "invalid port");
-        Check.checkBool(port<=65535, "invalid port");
+        Check.checkBool(host.length() != 0, "invalid host");
+        Check.checkBool(port > 0, "invalid port");
+        Check.checkBool(port <= 65535, "invalid port");
 
         synchronized(maps) {
 	        T result = isContain(interfaceClass, host, port);

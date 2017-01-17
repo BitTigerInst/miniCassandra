@@ -15,10 +15,8 @@ import java.util.ArrayList;
  */
 public interface IRpcMethod extends Serializable {
 
-	void rpcUpdateServerFingerTable(Type type, InetSocketAddress addr, int hashcode, int i);
+	void rpcUpdateServerFingerTable(Type type, InetSocketAddress addr);
 
-	// ArrayList<InetSocketAddress> RPC_Succ_update_finger_table(Type type, int hashcode);
-	
 	InetSocketAddress rpcGetSuccessor(int hashcode);
 	
 	InetSocketAddress rpcGetPredecessor(int hashcode);

@@ -7,6 +7,8 @@ import java.util.ArrayList;
 
 public class FingerTable {
 	private ArrayList<InetSocketAddress> starts;
+    private InetSocketAddress successor;
+
 	private static Logger logger = Logger.getLogger(FingerTable.class);
 
 	public FingerTable() {
@@ -16,20 +18,22 @@ public class FingerTable {
 		this.starts = starts;
 	}
 
+    public void setSuccessor(InetSocketAddress successor) {
+        this.successor = successor;
+    }
+
 	public int getListSize() {
 		return starts.size();
 	}
 
-	public void replace(int idx, InetSocketAddress var2) {
-		if(idx > 0 ) {
-			starts.remove(idx);
-			starts.add(idx, var2);
-		}else {
-			logger.error("replace error, finger table didn't contain var1");
-		}
-	}
+    public void add(InetSocketAddress var) {
+        if (!starts.contains(var)) starts.add(var);
+    }
+
+    public void remove(InetSocketAddress var) {
+        if (starts.contains(var)) starts.remove(var);
+    }
 	
-	//get a node form finger table according to the index
 	public InetSocketAddress getNode(int index) {
 		return starts.get(index);
 	}
