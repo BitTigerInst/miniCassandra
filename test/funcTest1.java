@@ -33,18 +33,18 @@ public class funcTest1 {
 		client.exec("Tom", "25", Operation.APPEND);
 		client.exec("Curry", "Team:", Operation.PUT);
 		String tom_old = client.exec("Tom", null, Operation.GET);
-		if(!tom_old.equals("old:25")) {
+		if (!tom_old.equals("old:25")) {
 			System.out.println("expect:old:25, but got" + tom_old);
 			return;
 		}
 		client.exec("Tom", "Team:Rockets", Operation.PUT);
 		client.exec("Curry", "Warriors", Operation.APPEND);
 		String curry_team = client.exec("Curry", null, Operation.GET);
-		if(!curry_team.equals("Team:Warriors")) {
+		if (!curry_team.equals("Team:Warriors")) {
 			System.out.println("expect:Team:Warriors, but got" + curry_team);
 			return;
 		}
-        //5.destroy the cluster
+		//5.destroy the cluster
 		Chord.DestroyCluster();
 		System.out.println("passed basic operation test");
 	}
