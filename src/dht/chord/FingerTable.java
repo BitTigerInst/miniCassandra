@@ -1,12 +1,13 @@
 package dht.chord;
 
+import org.apache.log4j.Logger;
+
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
-import dht.node.NodeImpl;
-
 public class FingerTable {
 	private ArrayList<InetSocketAddress> starts;
+	private static Logger logger = Logger.getLogger(FingerTable.class);
 
 	public FingerTable() {
 	}
@@ -24,7 +25,7 @@ public class FingerTable {
 			starts.remove(idx);
 			starts.add(idx, var2);
 		}else {
-			System.out.println("replace error, finger table didn't contain var1");
+			logger.error("replace error, finger table didn't contain var1");
 		}
 	}
 	

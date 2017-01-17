@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/MiniCassandra.iml" filepath="$PROJECT_DIR$/MiniCassandra.iml" />
+      <module fileurl="file://$PROJECT_DIR$/miniCassandra-project.iml" filepath="$PROJECT_DIR$/miniCassandra-project.iml" />
     </modules>
   </component>
 </project>

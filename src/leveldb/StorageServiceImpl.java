@@ -1,29 +1,30 @@
 package leveldb;
 
 import dht.node.NodeImpl;
+import org.apache.log4j.Logger;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
-import util.Debug;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+
 import static org.iq80.leveldb.impl.Iq80DBFactory.*;
 
-public class StorageServiceImpl implements IStorageService{
+public class StorageServiceImpl<T, K> implements IStorageService, Serializable {
 
 	private Options     options;
 	private DB          db;
 	private NodeImpl    node;
     private File        file;
+	private Logger      logger;
 
 	public StorageServiceImpl(NodeImpl node, String name) throws IOException {
 		this.node = node;
-		file = new File(name);
-		if (!file.exists()) {
-			file.mkdir();
-		}
+		this.logger = Logger.getLogger(StorageServiceImpl.class);
 		options = new Options();
 		options.createIfMissing(true);
-		db = factory.open(file, options);
+		db = factory.open(new File(name), options);
 	}
 
 	public DB getDb() {
@@ -32,7 +33,7 @@ public class StorageServiceImpl implements IStorageService{
 
 	public void put(String key, String value) {
 		db.put(bytes(key), bytes(value));
-		Debug.debug("Node[" + node.getHashcode() + "] PUT Key:" + key + "Value:" + value);
+        logger.info("Node[" + node.getHashcode() + "] PUT Key:" + key + "Value:" + value);
 	}
 
 	public void append(String key, String content) {
@@ -42,18 +43,18 @@ public class StorageServiceImpl implements IStorageService{
 		} else {
 			value = value + content;
 		}
-		Debug.debug("Node[" + node.getHashcode() + "] APPEND Key:" + key + "Value:" + value);
+		logger.info("Node[" + node.getHashcode() + "] APPEND Key:" + key + "Value:" + value);
 	}
 
 	public String get(String key) {
 		String value = asString(db.get(bytes(key)));
-		Debug.debug("Node[" + node.getHashcode() + "] GET Key:" + key + "Value:" + value);
+		logger.info("Node[" + node.getHashcode() + "] GET Key:" + key + "Value:" + value);
 		return value;
 	}
 
 	public void delete(String key) {
 		db.delete(bytes(key));
-		Debug.debug("Node[" + node.getHashcode() + "] DELETE Key:" + key);
+		logger.info("Node[" + node.getHashcode() + "] DELETE Key:" + key);
 	}
 
 	public void destroy() {

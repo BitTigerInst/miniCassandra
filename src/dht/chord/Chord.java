@@ -1,15 +1,16 @@
 package dht.chord;
 
 import dht.node.NodeImpl;
-import util.Debug;
+import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Chord implements Serializable {
 	private static ArrayList<NodeImpl> NodeList = new ArrayList<>();
-	private static Chord chord = null;
+	private static transient Chord chord = null;
 	private int length;
+	private static Logger logger = Logger.getLogger(Chord.class);
 	//private int RING_LEN;
 
 	/**
@@ -28,7 +29,7 @@ public class Chord implements Serializable {
 
 	public static Chord CreateCluster(int num, int ringLen, ArrayList<String> ipList, ArrayList<Integer>portList) throws Exception {
 		if (ipList.size() != portList.size() || ipList.size() != num) {
-			throw new IllegalArgumentException("Cluster create failed, IP list or Port list size error");
+			throw new IllegalArgumentException("Cluster create failed, the size of IP list should equal to the size of Port list");
 		}
 		if (chord != null) return chord;
 		if (ipList.size() <= 0) return null;
@@ -54,6 +55,6 @@ public class Chord implements Serializable {
 	
 	private Chord(int n) {
 		this.length = n;
-		Debug.debug("Creating a cluster RING_LEN:" + length + ", contain " + NodeList + "nodes.");
+        logger.debug("Creating a cluster RING_LEN:" + length + ", contain " + NodeList + "nodes.");
 	}
 }

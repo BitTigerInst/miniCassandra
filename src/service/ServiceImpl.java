@@ -1,15 +1,17 @@
 package service;
 import dht.node.NodeImpl.Operation;
-import util.Debug;
+import org.apache.log4j.Logger;
 import rpc.IRpcMethod;
 
 public class ServiceImpl implements IService{
 	IRpcMethod IRpc;
 	int clientId;
+	Logger logger;
 
 	public ServiceImpl(int id, IRpcMethod serviceProvider) {
 		this.clientId = id;
 		this.IRpc = serviceProvider;
+		this.logger = Logger.getLogger(ServiceImpl.class);
 	}
 
 	/**
@@ -20,28 +22,28 @@ public class ServiceImpl implements IService{
 	@Override
 	public void put(String key, String value) {
 		IRpc.rpcCallPad(key, value, Operation.PUT);
-		Debug.debug("Client[" + clientId +"] send put key:" + key
+		logger.debug("Client[" + clientId +"] send put key:" + key
 				    + " value:" + value + " operation failed!");
 	}
 
 	@Override
 	public String get(String key) {
 		String result = IRpc.rpcCallGet(key);
-		Debug.debug("Client[" + clientId +"] send get result:" + result);
+		logger.debug("Client[" + clientId +"] send get result:" + result);
 		return result;
 	}
 
 	@Override
 	public void append(String key, String value) {
 		IRpc.rpcCallPad(key, value, Operation.APPEND);
-		Debug.debug("Client[" + clientId +"] send append key:" + key
+		logger.debug("Client[" + clientId +"] send append key:" + key
 					+ " value:" + value + " operation failed!");
 	}
 
 	@Override
 	public void delete(String key, String value) {
 		IRpc.rpcCallPad(key, value, Operation.DELETE);
-		Debug.debug("Client[" + clientId +"] send delete key:" + key
+		logger.debug("Client[" + clientId +"] send delete key:" + key
 					+ " value:" + value + " operation failed!");
 	}
 }

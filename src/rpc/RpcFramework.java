@@ -2,6 +2,7 @@ package rpc;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -9,8 +10,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.log4j.Logger;
 import util.Check;
-import util.Debug;
 
 class rpcEntry {
 	Class<?> interfaceClass;
@@ -28,8 +30,11 @@ class rpcEntry {
  * RpcFramework
  * 
  */
-public class RpcFramework {
-	
+public class RpcFramework implements Serializable{
+	private boolean running;
+	static ConcurrentHashMap<rpcEntry, Object> maps = new ConcurrentHashMap<rpcEntry, Object>();
+	static transient Logger logger = Logger.getLogger(RpcFramework.class);
+
 	public static <T> T isContain(Class<T> interfaceClass, final String host, final int port) {
 		for(Entry<rpcEntry, Object> e: maps.entrySet()) {
 			rpcEntry entry = e.getKey();
@@ -39,9 +44,6 @@ public class RpcFramework {
 		}
 		return null;
 	}
-
-	private boolean running;
-	static ConcurrentHashMap<rpcEntry, Object> maps = new ConcurrentHashMap<rpcEntry, Object>();
 
 	public RpcFramework(boolean running) {
 		this.running = running;
@@ -59,7 +61,7 @@ public class RpcFramework {
             throw new IllegalArgumentException("service instance == null");
         if (port <= 0 || port > 65535)
             throw new IllegalArgumentException("Invalid port " + port);
-        Debug.debug("Export service " + service.getClass().getName() + " on port " + port);
+        logger.debug("Export service " + service.getClass().getName() + " on port " + port);
         ServerSocket server = new ServerSocket(port);
         while(running) {
             try {
@@ -152,10 +154,10 @@ public class RpcFramework {
 	            });
 	        	rpcEntry rpcEntry = new rpcEntry(interfaceClass, host, port);
 	        	maps.put(rpcEntry, result);
-	            Debug.debug("Create remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
+	            logger.debug("Create remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
 	        }
 	        else {
-	            Debug.debug("Get cached Remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
+	            logger.debug("Get cached Remote service " + interfaceClass.getName() + " from server " + host + ":" + port);
 	        }
 	        return result;
         }

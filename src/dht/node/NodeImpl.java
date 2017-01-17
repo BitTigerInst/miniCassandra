@@ -3,35 +3,49 @@ package dht.node;
 import dht.chord.FingerTable;
 import leveldb.IStorageService;
 import leveldb.StorageServiceImpl;
+import org.apache.log4j.Logger;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 import rpc.IRpcMethod;
 import rpc.RpcFramework;
-import util.Debug;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
+class NodeLogger {
+    private static final transient Logger logger = Logger.getLogger(NodeImpl.class);
+
+    public static void info(Object o) {
+        logger.info(o);
+    }
+
+    public static void error(Object o) {
+        logger.error(o);
+    }
+}
+
 public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable {
 	private int               RING_LEN;
     private int               bits;
 	private InetSocketAddress address;
-	private FingerTable       table;
+	private transient FingerTable       table;
 	private InetSocketAddress predecessor;
 	private boolean           isStable;
 	private boolean           isRunning;
 	private IRpcMethod        Itrans;
-	private IStorageService   storageProxy;
+	private transient IStorageService   storageProxy;
 	private int               hashcode;
 	private RpcFramework      rpcFramework;
 	private static int        fileCount = 0;
 	private static int        MAX_WAIT_STABLE_CYCLE = 30;
 	private static int        WAIT_STABLE_CYCLE_MS = 1000;
 
+
 	private NodeImpl(InetSocketAddress address, int bits) throws Exception {
-        this.bits = bits;
+		this.bits = bits;
 		this.RING_LEN = 1 << bits;
 		this.address = address;
 		this.hashcode = hashing(this.hashCode());
@@ -39,7 +53,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 		Itrans = this;
 		storageProxy = new StorageServiceImpl(this, generateFileName());
 		rpcFramework = new RpcFramework(true);
-		Debug.debug("Create Server Address:" + address.getHostName() + ", port:" + address.getPort());
+        NodeLogger.info("Create Server Address:" + address.getHostName() + ", port:" + address.getPort());
 	}
 	
 	public enum Operation implements Serializable {
@@ -124,7 +138,8 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 			++cycle;
 		}
 		if (cycle==MAX_WAIT_STABLE_CYCLE) {
-			throw new RuntimeException("Join Chord Ring failure");
+            NodeLogger.error("Join Chord Ring failure");
+			throw new RuntimeException();
 		}
 	}
 
@@ -157,7 +172,8 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 			waitStable();
 			exec(key, value, oper);
 		} else {
-			throw new IllegalArgumentException("Warning: this server is not alive!!");
+            NodeLogger.error("this server is not alive!!");
+			throw new IllegalArgumentException();
 		}
 		return null;
 	}
@@ -215,15 +231,13 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 			return null;
 		}
 	}
-
 	
 	private InetSocketAddress getPredecessor() {
 		return predecessor;
 	}
 	
-	
 	public InetSocketAddress rpcGetSuccessor(int hashcode) {
-		Debug.debug("calculate the successor node for the new node");
+        NodeLogger.info("calculate the successor node for the new node");
 		if(isBelongMe(hashcode)) {
 			return address;
 		}
@@ -249,12 +263,12 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
                 table.setFingerTableList(fingerTable);
             } else {
                 //first node in cluster
-                table.setFingerTableList(new ArrayList<>());
+                table.setFingerTableList(new ArrayList<InetSocketAddress>());
             }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		Debug.debug("server " + this.getHashcode() + " is joining ring successfully");
+        NodeLogger.info("server " + this.getHashcode() + " is joining ring successfully");
         this.isRunning = true;
 	}
 
@@ -271,7 +285,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 														successor.getAddress().getHostAddress(), 
 																successor.getPort());
 			service.rpcLeaveChordRing();
-			Debug.debug("Server " + this.getHashcode() + " is leaving the ring successfully");
+            NodeLogger.info("Server " + this.getHashcode() + " is leaving the ring successfully");
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -303,7 +317,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 				isStable = true;
 			} else {
 				waitStable();
-				Debug.debug("Warning:A server want to join a unstable chord ring!");
+                NodeLogger.info("A node want to join a unstable chord ring!");
 			}
 		}
 		return tableList;
@@ -397,7 +411,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 				handleLeaveChordRing();
 				isStable = true;
 			} else {
-				Debug.debug("Warning:a server want to join a unstable chord ring!");
+                NodeLogger.error("A node want to join a unstable chord ring!");
 			}
 		}
 	}
