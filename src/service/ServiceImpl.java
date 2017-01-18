@@ -22,8 +22,7 @@ public class ServiceImpl implements IService{
 	@Override
 	public void put(String key, String value) {
 		IRpc.rpcCallPad(key, value, Operation.PUT);
-		logger.debug("Client[" + clientId +"] send put key:" + key
-				    + " value:" + value + " operation failed!");
+		logger.debug("Client[" + clientId +"] send put key:" + key + " value:" + value);
 	}
 
 	@Override
@@ -36,14 +35,12 @@ public class ServiceImpl implements IService{
 	@Override
 	public void append(String key, String value) {
 		IRpc.rpcCallPad(key, value, Operation.APPEND);
-		logger.debug("Client[" + clientId +"] send append key:" + key
-					+ " value:" + value + " operation failed!");
+		logger.debug("Client[" + clientId +"] send append key:" + key + " value:" + value );
 	}
 
 	@Override
 	public void delete(String key, String value) {
 		IRpc.rpcCallPad(key, value, Operation.DELETE);
-		logger.debug("Client[" + clientId +"] send delete key:" + key
-					+ " value:" + value + " operation failed!");
+		logger.debug("Client[" + clientId +"] send delete key:" + key + " value:" + value);
 	}
 }

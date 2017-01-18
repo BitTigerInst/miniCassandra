@@ -372,7 +372,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 		InetSocketAddress succAddr = rpcGetSuccessor(hashing(newNode.hashCode()));
 		IRpcMethod service;
         InetSocketAddress n = new InetSocketAddress(newNode.getAddr(), newNode.getPort());;
-        if (succAddr.getAddress() == this.getAddr()) {
+        if (succAddr.getAddress() != this.getAddr()) {
             try {
                 service = RpcFramework.refer(IRpcMethod.class, succAddr.getAddress().getHostAddress(), succAddr.getPort());
                 InetSocketAddress predecessor = service.rpcGetPred();

@@ -22,6 +22,10 @@ public class FingerTable {
         this.successor = successor;
     }
 
+    public InetSocketAddress getSuccessor(InetSocketAddress successor) {
+        return successor;
+    }
+
 	public int getListSize() {
 		return starts.size();
 	}
