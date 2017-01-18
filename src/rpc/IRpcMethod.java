@@ -30,9 +30,7 @@ public interface IRpcMethod extends Serializable {
 	ArrayList<String> rpcGetRemotedatq() throws IOException;
 	
 	void rpcChangePred(InetSocketAddress addr);
-
-	void rpcChangeSucc(InetSocketAddress addr);
-
+	
 	/*
 	 *  rpc interface for join chord ring
 	 */

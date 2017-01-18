@@ -29,7 +29,6 @@ class NodeLogger {
 
 public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable {
 	private int                   RING_LEN;
-    private int                   bits;
 	private InetSocketAddress     address;
 	private transient FingerTable table;
 	private InetSocketAddress     predecessor;
@@ -45,13 +44,12 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 
 
 	private NodeImpl(InetSocketAddress address, int bits) throws Exception {
-		this.bits = bits;
 		this.RING_LEN = 1 << bits;
 		this.address = address;
 		this.hashcode = hashing(this.hashCode());
         this.isRunning = false;
         this.isStable = false;
-        table = new FingerTable();
+        table = new FingerTable(address);
 		Itrans = this;
 		storageProxy = new StorageServiceImpl(this, generateFileName());
 		rpcFramework = new RpcFramework(true);
@@ -173,7 +171,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 			}
 		} else if(!isStable && isRunning) {
 			waitStable();
-			exec(key, value, oper);
+			return exec(key, value, oper);
 		} else {
             NodeLogger.error("this server is not alive!!");
 			throw new IllegalArgumentException();
@@ -329,18 +327,6 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 		return tableList;
 	}
 	
-	private ArrayList<InetSocketAddress> initFingerTable(int hashCode) throws Exception {
-        ArrayList<InetSocketAddress> tableList = new ArrayList<InetSocketAddress>();
-        for (int i = 0, j = 1; i < bits; ++i, j *= 2) {
-            int idx = hashCode + j;
-            if (idx > RING_LEN) {
-                idx -= RING_LEN;
-            }
-            tableList.add(rpcGetSuccessor(idx));
-        }
-		return tableList;
-	}
-	
 	private void updateOthers(Type type, InetSocketAddress n) {
         for (int i = 0; i < table.getListSize(); i++) {
             IRpcMethod service;
@@ -375,26 +361,19 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
         if (succAddr.getAddress() != this.getAddr()) {
             try {
                 service = RpcFramework.refer(IRpcMethod.class, succAddr.getAddress().getHostAddress(), succAddr.getPort());
-                InetSocketAddress predecessor = service.rpcGetPred();
                 service.rpcChangePred(newNode.address);
-                service = RpcFramework.refer(IRpcMethod.class, predecessor.getAddress().getHostAddress(), predecessor.getPort());
-                service.rpcChangeSucc(newNode.address);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
             InetSocketAddress predecessor = this.getPredecessor();
             if (predecessor!=null && predecessor.getAddress()!=this.getAddr()) {
-                this.predecessor = new InetSocketAddress(newNode.getAddr(), newNode.getPort());
-                service = RpcFramework.refer(IRpcMethod.class, predecessor.getAddress().getHostAddress(), predecessor.getPort());
-                service.rpcChangeSucc(newNode.address);
+                this.predecessor = n;
             } else {
                 this.predecessor = n;
-                this.table.setSuccessor(n);
             }
         }
 		// init finger table
-//		tableList = initFingerTable(hashing(newNode.hashCode()));
         for (int i = 0; i < this.table.getListSize(); i++) tableList.add(this.table.getNode(i));
         // update node info
 		updateOthers(Type.JOIN, n);
@@ -407,7 +386,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 
 	public ArrayList<String> rpcGetRemotedatq() throws IOException {
 		DBIterator iterator = storageProxy.getDb().iterator();
-		ArrayList<String> ret = new ArrayList<String>();
+		ArrayList<String> ret = new ArrayList<>();
 		try {
 		  for(iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
 		    String key = Iq80DBFactory.asString(iterator.peekNext().getKey());
@@ -447,27 +426,6 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 	}
 
 	public void rpcUpdateServerFingerTable(Type type, InetSocketAddress n) {
-		// the boundary is not clear
-//		if (inRange(nodeHashcode, this.hashcode, hashing(table.getNode(i).hashCode()))) {
-//			switch (type) {
-//				case JOIN:
-//					table.replace(i, addr);
-//					break;
-//				case LEAVE:
-//					int ithID = this.hashcode + (int) Math.pow(2, i);
-//					InetSocketAddress newAddr = rpcGetSuccessor(ithID);
-//					table.replace(i, newAddr);
-//					break;
-//			}
-//			InetSocketAddress next = table.getNode(0);
-//			IRpcMethod service;
-//			try {
-//				service = RpcFramework.refer(IRpcMethod.class, next.getAddress().getHostAddress(), next.getPort());
-//				service.rpcUpdateServerFingerTable(type, addr, nodeHashcode, i);
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//		}
         switch (type) {
             case JOIN:
                 table.add(n);
@@ -494,11 +452,7 @@ public class NodeImpl extends Thread implements INode, IRpcMethod, Serializable 
 		predecessor = addr;
 	}
 
-    public void rpcChangeSucc(InetSocketAddress addr) {
-        table.setSuccessor(addr);
-    }
-
-	public InetSocketAddress rpcGetPredecessor(int hashcode) {
+    public InetSocketAddress rpcGetPredecessor(int hashcode) {
 		InetSocketAddress succ = rpcGetSuccessor(hashcode);
 		IRpcMethod service;
 		InetSocketAddress pred = null;

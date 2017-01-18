@@ -11,12 +11,11 @@ import java.io.Serializable;
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.*;
 
-public class StorageServiceImpl<T, K> implements IStorageService, Serializable {
+public class StorageServiceImpl implements IStorageService, Serializable {
 
 	private Options     options;
 	private DB          db;
 	private NodeImpl    node;
-    private File        file;
 	private Logger      logger;
 
 	public StorageServiceImpl(NodeImpl node, String name) throws IOException {
@@ -33,21 +32,21 @@ public class StorageServiceImpl<T, K> implements IStorageService, Serializable {
 
 	public void put(String key, String value) {
 		db.put(bytes(key), bytes(value));
-        logger.info("Node[" + node.getHashcode() + "] PUT Key:" + key + "Value:" + value);
+        logger.info("Node[" + node.getHashcode() + "] PUT Key:" + key + " Value:" + value);
 	}
 
 	public void append(String key, String content) {
 		String value = get(key);
 		if(value != null) {
-			value += content;
-		}
+            value += content;
+        }
         put(key, value);
-		logger.info("Node[" + node.getHashcode() + "] APPEND Key:" + key + "Value:" + value);
+		logger.info("Node[" + node.getHashcode() + "] APPEND Key:" + key + " Value:" + value);
 	}
 
 	public String get(String key) {
 		String value = asString(db.get(bytes(key)));
-		logger.info("Node[" + node.getHashcode() + "] GET Key:" + key + "Value:" + value);
+		logger.info("Node[" + node.getHashcode() + "] GET Key:" + key + " Value:" + value);
 		return value;
 	}
 
@@ -58,7 +57,6 @@ public class StorageServiceImpl<T, K> implements IStorageService, Serializable {
 
 	public void destroy() {
 		try {
-            file.delete();
 			db.close();
 		} catch (IOException e) {
 			e.printStackTrace();
