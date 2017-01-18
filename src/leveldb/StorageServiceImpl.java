@@ -38,11 +38,10 @@ public class StorageServiceImpl<T, K> implements IStorageService, Serializable {
 
 	public void append(String key, String content) {
 		String value = get(key);
-		if(value == null) {
-			put(key, content);
-		} else {
-			value = value + content;
+		if(value != null) {
+			value += content;
 		}
+        put(key, value);
 		logger.info("Node[" + node.getHashcode() + "] APPEND Key:" + key + "Value:" + value);
 	}
 
